@@ -104,7 +104,7 @@ bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt",
                         inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
                         select(-Name)
                       
-                      predict_par <- makeRegrTask(id = "Temp", 
+                      predict_par <- makeRegrTask(id = ith_condition, 
                                                   data = dat, 
                                                   target = ith_condition)
                       
