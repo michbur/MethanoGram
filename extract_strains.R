@@ -7,7 +7,7 @@ raw_dat <- read.csv("./data/dump_17-07-23.csv")
 
 rna_seqs <- read.fasta("./data/rRNA_.txt")
 
-#
+# extracting strain info
 strain_df <- lapply(rna_seqs, function(i) 
   strsplit(attr(i, "name"), split = "|", fixed = TRUE)[[1]][2]) %>% 
   unlist %>% 
@@ -36,11 +36,7 @@ more_then_one_strain <- strain_df %>%
   unlist %>% 
   as.character 
 
-filter(raw_dat, Name %in% more_then_one_strain) %>% 
-  select(Name, Type.strain, DSM.strain.number, ATTC.strain.number, Other.collections) %>% 
-  inner_join(strain_df, by = c("Name" = "X1")) %>% 
-  filter(!duplicated(.))
-
+# save strains and their strain ID from sequences
 filter(raw_dat, Name %in% more_then_one_strain) %>% 
   select(Name, Type.strain, DSM.strain.number) %>% 
   inner_join(strain_df, by = c("Name" = "X1")) %>% 
@@ -51,3 +47,5 @@ filter(raw_dat, Name %in% more_then_one_strain) %>%
   mutate(found = grepl(X2, Type.strain) + grepl(X2, DSM.strain.number)) %>% 
   filter(found == 0) %>% 
   write.csv(file = "./results/doubtful_strains.csv", row.names = FALSE)
+
+
