@@ -89,7 +89,7 @@ all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 
 
-benchmark_ngram_length <- lapply(1L:2, function(ngram_length) {
+benchmark_ngram_length <- lapply(1L:5, function(ngram_length) {
   
   lapply(c("mcra_seqs", "rna_seqs"), function(ith_seqs) {
     ith_seqs_data <- seq_data[[ith_seqs]] 
@@ -133,15 +133,8 @@ benchmark_ngram_length <- lapply(1L:2, function(ngram_length) {
 }) %>%
   do.call(rbind, .)
 
-write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark.csv")
+write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark.csv", row.names = FALSE)
 
-# mutate(benchmark_ngram_length, error = sqrt(mse)) %>%
-#   group_by(task.id, ngram_length, seq_type) %>%
-#   summarise(mean_error = mean(error)) %>% 
-#   ggplot(aes(x = factor(ngram_length), y = mean_error, color = seq_type)) +
-#   geom_point(position = position_jitter(width = 0.2)) +
-#   facet_wrap(~ task.id, scales = "free_y") +
-#   theme_bw()
  
 # group_by(task.id) %>% 
 #   summarise(mse = mean(mse)) %>% 
