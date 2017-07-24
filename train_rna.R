@@ -46,23 +46,14 @@ rownames(validated_seqs) <- strsplit(rownames(validated_seqs), split = "|", fixe
   strsplit(split = "_") %>% 
   sapply(function(i) paste0(i[1L:2], collapse = " "))
 
-ngram_matrix <- count_ngrams(validated_seqs, 4, u = c("a", "c", "g", "t"), scale = TRUE)
-
-normalized_ngrams <- ngram_matrix %>% 
-  as.matrix %>% 
-  data.frame %>% 
-  mutate(source = rownames(validated_seqs)) %>% 
-  group_by(source) %>% 
-  summarise_all(mean) 
-
-raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]], 
-        c("Growth.doubling.time..h.", "Growth.rate", 
-          "Min..growth.temp.", "Max..growth.temp.", 
-          "Min..optimal.growth.temp.", "Max..optimal.growth.temp.",  
-          "Min..growth.NaCl", "Max..growth.NaCl", 
-          "Min..optimal.growth.NaCl", "Max..optimal.growth.NaCl", 
-          "Min..growth.pH", "Max..growth.pH", 
-          "Min..optimal.growth.pH", "Max..optimal.growth.pH")]
+# raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]], 
+#         c("Growth.doubling.time..h.", "Growth.rate", 
+#           "Min..growth.temp.", "Max..growth.temp.", 
+#           "Min..optimal.growth.temp.", "Max..optimal.growth.temp.",  
+#           "Min..growth.NaCl", "Max..growth.NaCl", 
+#           "Min..optimal.growth.NaCl", "Max..optimal.growth.NaCl", 
+#           "Min..growth.pH", "Max..growth.pH", 
+#           "Min..optimal.growth.pH", "Max..optimal.growth.pH")]
 
 conditions_dat <- raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]], 
                           c("Name", 
@@ -97,20 +88,55 @@ conditions_dat <- raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]],
 
 
 
-bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt", 
-                      "mean_gn", "mean_ogn", "mean_gp", "mean_ogp"),
-                    function(ith_condition) {
-                      dat <- conditions_dat[, c("Name", ith_condition)] %>% 
-                        inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
-                        select(-Name)
-                      
-                      predict_par <- makeRegrTask(id = ith_condition, 
-                                                  data = dat, 
-                                                  target = ith_condition)
-                      
-                      learnerRF <- makeLearner("regr.randomForest")
-                      
-                      set.seed(1410)
-                      benchmark(learnerRF, predict_par, makeResampleDesc("CV", iters = 5L))
-                    })
+
+benchmark_ngram_length <- lapply(1L:5, function(ngram_length) {
+  
+  ngram_matrix <- count_ngrams(validated_seqs, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
+  
+  normalized_ngrams <- ngram_matrix %>% 
+    as.matrix %>% 
+    data.frame %>% 
+    mutate(source = rownames(validated_seqs)) %>% 
+    group_by(source) %>% 
+    summarise_all(mean) 
+  
+  
+  bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt", 
+                        "mean_gn", "mean_ogn", "mean_gp", "mean_ogp"),
+                      function(ith_condition) {
+                        dat <- conditions_dat[, c("Name", ith_condition)] %>% 
+                          inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
+                          select(-Name)
+                        
+                        predict_par <- makeRegrTask(id = ith_condition, 
+                                                    data = dat, 
+                                                    target = ith_condition)
+                        
+                        learnerRF <- makeLearner("regr.randomForest")
+                        
+                        set.seed(1410)
+                        benchmark(learnerRF, predict_par, makeResampleDesc("CV", iters = 5L))
+                      })
+  
+  
+  lapply(bench_res, function(i) 
+    data.frame(i)) %>% 
+    do.call(rbind, .) %>% 
+    mutate(ngram_length = ngram_length)
+})
+
+lapply(1L:5, function(i)
+  benchmark_ngram_length[[i]] %>% 
+    mutate(ngram_length = i)) %>% 
+  do.call(rbind, .) %>% 
+  mutate(error = sqrt(mse)) %>% 
+  ggplot(aes(x = factor(ngram_length), y = error, color = factor(iter))) +
+  geom_point() +
+  facet_wrap(~ task.id, scales = "free_y") +
+  theme_bw()
+ 
+# group_by(task.id) %>% 
+#   summarise(mse = mean(mse)) %>% 
+#   mutate(error = sqrt(mse),
+#          ngram_length = ngram_length)
 
