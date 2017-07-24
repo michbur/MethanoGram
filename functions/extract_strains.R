@@ -1,5 +1,3 @@
-
-
 extract_strains <- function(raw_dat, seqs) {
   # extracting strain info
   strain_df <- lapply(seqs, function(i) 

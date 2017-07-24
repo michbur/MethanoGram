@@ -4,47 +4,24 @@ library(seqinr)
 library(pbapply)
 library(mlr)
 
+source("./functions/validate_seqs.R")
+
 raw_dat <- read.csv("./data/dump_17-07-23.csv") 
 
-rna_seqs <- read.fasta("./data/rRNA_.txt")
+rna_seqs <- read.fasta("./data/rRNA_.txt") %>% 
+  validate_seqs()
 
-validated_seq_names <- lapply(rna_seqs, function(i) 
-  strsplit(attr(i, "name"), split = "|", fixed = TRUE)[[1]][2]) %>% 
-  unlist %>% 
-  unname %>% 
-  sub("_", " ", .) %>% 
-  sub("_", "|", .) %>% 
-  strsplit(split = "|", fixed = TRUE) %>% 
-  lapply(function(i) if(length(i) == 1) {
-    c(i, "") 
-  } else {
-    i
+
+mcra_seqs <- c(read.fasta("./raw_data/McrA_1.txt"),
+               read.fasta("./raw_data/McrA_2.txt"),
+               read.fasta("./raw_data/McrA_3.txt")) %>% 
+  lapply(function(i) {
+    res <- i[i != "-"]
+    mostattributes(res) <- attributes(i)
+    res
   }) %>% 
-  do.call(rbind, .) %>% 
-  data.frame(stringsAsFactors = FALSE) %>% 
-  mutate(X2 = sub("_", "-", X2)) %>% 
-  left_join(read.csv("./results/doubtful_strains_modif.csv",
-                     stringsAsFactors = FALSE)[c("Name", "X2", "is.reference")],
-            by = c("X1" = "Name", "X2" = "X2"))  %>% 
-  mutate(is.reference = ifelse(is.na(is.reference), TRUE, is.reference)) 
+  validate_seqs()
 
-filter(validated_seq_names, is.reference) %>% 
-  select(X1) %>% 
-  unlist %>% 
-  unique %>% 
-  length
-# 141 species
-
-# remove following nucleotides: c("r", "n", "b", "s", "m", "d", "w", "y", "k", "v")
-only_standard_nucleotides <- sapply(rna_seqs, function(i)
-  !any(c("r", "n", "b", "s", "m", "d", "w", "y", "k", "v") %in% i))
-
-validated_seqs <- list2matrix(rna_seqs[validated_seq_names[["is.reference"]] & only_standard_nucleotides])
-
-rownames(validated_seqs) <- strsplit(rownames(validated_seqs), split = "|", fixed = TRUE) %>% 
-  sapply(function(i) i[2]) %>% 
-  strsplit(split = "_") %>% 
-  sapply(function(i) paste0(i[1L:2], collapse = " "))
 
 # raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]], 
 #         c("Growth.doubling.time..h.", "Growth.rate", 
@@ -55,8 +32,7 @@ rownames(validated_seqs) <- strsplit(rownames(validated_seqs), split = "|", fixe
 #           "Min..growth.pH", "Max..growth.pH", 
 #           "Min..optimal.growth.pH", "Max..optimal.growth.pH")]
 
-conditions_dat <- raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]], 
-                          c("Name", 
+conditions_dat <- raw_dat[c("Name", 
                             "Growth.doubling.time..h.", "Growth.rate", 
                             "Min..growth.temp.", "Max..growth.temp.", 
                             "Min..optimal.growth.temp.", "Max..optimal.growth.temp.",  
@@ -85,6 +61,28 @@ conditions_dat <- raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]],
          mean_gp = (min_gp + max_gp)/2,
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
   na.omit
+
+
+both_mcra_rna <- intersect(unique(rownames(rna_seqs)), unique(rownames(mcra_seqs)))
+both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(mcra_seqs)))
+both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(rna_seqs)))
+all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
+
+
+# library(VennDiagram)
+# 
+# venn.plot <- draw.triple.venn(length(unique(rownames(rna_seqs))), 
+#                               length(unique(rownames(mcra_seqs))), 
+#                               length(as.character(conditions_dat[["Name"]])),
+#                               length(both_mcra_rna), 
+#                               length(both_mcra_conditions), 
+#                               length(both_rna_conditions), 
+#                               length(all_three), 
+#                               c("Known RNA", "Known mcrA", "Known conditions"),
+#                               fill = c("#f1a340", "#998ec3", "#f7f7f7"))
+# grid.draw(venn.plot)
+# grid.newpage()
+
 
 
 
