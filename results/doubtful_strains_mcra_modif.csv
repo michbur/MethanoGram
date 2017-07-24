@@ -1,0 +1,11 @@
+Name,Type.strain,DSM.strain.number,X2,is.reference
+Methanococcoides methylutens,TMA-10,DSM-2657,MM1,FALSE
+Methanococcus maripaludis,JJ,DSM-2067,C7,FALSE
+Methanococcus maripaludis,JJ,DSM-2067,C6,FALSE
+Methanococcus maripaludis,JJ,DSM-2067,C5,FALSE
+Methanolinea tarda,NOBi-1,DSM-16494,NOBI-1,TRUE
+Methanosaeta harundinacea,8Ac,DSM-17206,6Ac,FALSE
+Methanosarcina barkeri,MS,DSM-800,str.-Wiesmoor,FALSE
+Methanosarcina barkeri,MS,DSM-800,str.-Fusaro,FALSE
+Methanosarcina lacustris,ZS,DSM-13486,Z-7289,FALSE
+Methanothermobacter marburgensis,Marburg,DSM-2133,str.-Marburg,TRUE
