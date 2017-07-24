@@ -22,6 +22,8 @@ mcra_seqs <- c(read.fasta("./raw_data/McrA_1.txt"),
   }) %>% 
   validate_seqs()
 
+seq_data <- list(mcra_seqs = mcra_seqs,
+                 rna_seqs = rna_seqs)
 
 # raw_dat[raw_dat[["Name"]] %in% normalized_ngrams[["source"]], 
 #         c("Growth.doubling.time..h.", "Growth.rate", 
@@ -87,51 +89,59 @@ all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 
 
-benchmark_ngram_length <- lapply(1L:5, function(ngram_length) {
+benchmark_ngram_length <- lapply(1L:2, function(ngram_length) {
   
-  ngram_matrix <- count_ngrams(validated_seqs, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
-  
-  normalized_ngrams <- ngram_matrix %>% 
-    as.matrix %>% 
-    data.frame %>% 
-    mutate(source = rownames(validated_seqs)) %>% 
-    group_by(source) %>% 
-    summarise_all(mean) 
-  
-  
-  bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt", 
-                        "mean_gn", "mean_ogn", "mean_gp", "mean_ogp"),
-                      function(ith_condition) {
-                        dat <- conditions_dat[, c("Name", ith_condition)] %>% 
-                          inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
-                          select(-Name)
-                        
-                        predict_par <- makeRegrTask(id = ith_condition, 
-                                                    data = dat, 
-                                                    target = ith_condition)
-                        
-                        learnerRF <- makeLearner("regr.randomForest")
-                        
-                        set.seed(1410)
-                        benchmark(learnerRF, predict_par, makeResampleDesc("CV", iters = 5L))
-                      })
-  
-  
-  lapply(bench_res, function(i) 
-    data.frame(i)) %>% 
-    do.call(rbind, .) %>% 
-    mutate(ngram_length = ngram_length)
-})
+  lapply(c("mcra_seqs", "rna_seqs"), function(ith_seqs) {
+    ith_seqs_data <- seq_data[[ith_seqs]] 
+    ith_seqs_data <- ith_seqs_data[rownames(ith_seqs_data) %in% all_three, ]
 
-lapply(1L:5, function(i)
-  benchmark_ngram_length[[i]] %>% 
-    mutate(ngram_length = i)) %>% 
-  do.call(rbind, .) %>% 
-  mutate(error = sqrt(mse)) %>% 
-  ggplot(aes(x = factor(ngram_length), y = error, color = factor(iter))) +
-  geom_point() +
-  facet_wrap(~ task.id, scales = "free_y") +
-  theme_bw()
+    ngram_matrix <- count_ngrams(ith_seqs_data, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
+    
+    normalized_ngrams <- ngram_matrix %>% 
+      as.matrix %>% 
+      data.frame %>% 
+      mutate(source = rownames(ith_seqs_data)) %>% 
+      group_by(source) %>% 
+      summarise_all(mean) 
+    
+    
+    bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt", 
+                          "mean_gn", "mean_ogn", "mean_gp", "mean_ogp"),
+                        function(ith_condition) {
+                          dat <- conditions_dat[, c("Name", ith_condition)] %>% 
+                            inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
+                            select(-Name)
+                          
+                          predict_par <- makeRegrTask(id = ith_condition, 
+                                                      data = dat, 
+                                                      target = ith_condition)
+                          
+                          learnerRF <- makeLearner("regr.ranger")
+                          
+                          set.seed(1410)
+                          benchmark(learnerRF, predict_par, makeResampleDesc("CV", iters = 5L))
+                        })
+    
+    
+    lapply(bench_res, function(i) 
+      data.frame(i)) %>% 
+      do.call(rbind, .) %>% 
+      mutate(ngram_length = ngram_length,
+             seq_type = ith_seqs)  
+  }) %>% 
+    do.call(rbind, .)
+}) %>%
+  do.call(rbind, .)
+
+write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark.csv")
+
+# mutate(benchmark_ngram_length, error = sqrt(mse)) %>%
+#   group_by(task.id, ngram_length, seq_type) %>%
+#   summarise(mean_error = mean(error)) %>% 
+#   ggplot(aes(x = factor(ngram_length), y = mean_error, color = seq_type)) +
+#   geom_point(position = position_jitter(width = 0.2)) +
+#   facet_wrap(~ task.id, scales = "free_y") +
+#   theme_bw()
  
 # group_by(task.id) %>% 
 #   summarise(mse = mean(mse)) %>% 
