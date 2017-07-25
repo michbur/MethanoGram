@@ -89,7 +89,7 @@ all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 
 
-benchmark_ngram_length <- lapply(1L:5, function(ngram_length) {
+benchmark_ngram_length <- lapply(1L:7, function(ngram_length) {
   
   lapply(c("mcra_seqs", "rna_seqs"), function(ith_seqs) {
     ith_seqs_data <- seq_data[[ith_seqs]] 
