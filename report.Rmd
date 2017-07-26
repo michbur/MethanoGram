@@ -1,0 +1,16 @@
+---
+title: "Wyniki"
+author: "Michal Burdukiewicz"
+date: "26 lipca 2017"
+output: html_document
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+library(DT)
+library(dplyr)
+dat <- read.csv("./results/all_res.csv") %>% 
+  mutate(mean_error = round(mean_error, 2),
+         sd_error = round(sd_error, 2))
+datatable(dat, options = list(), class = "display", callback = JS("return table;"), filter = "top")
+```
