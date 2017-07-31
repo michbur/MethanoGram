@@ -1,17 +1,28 @@
 library(dplyr)
 library(ggplot2)
 
-benchmark_ngram_length_opt <- read.csv("./results/ngram_benchmark_opt.csv") %>% 
-  mutate(error = sqrt(mse)) %>% 
-  inner_join(read.csv("./data/full_names.csv"))
+benchmark_ngram_length <- rbind(read.csv("./results/ngram_benchmark_opt.csv") %>% 
+                                  mutate(error = sqrt(mse),
+                                         opt = TRUE) %>% 
+                                  inner_join(read.csv("./data/full_names.csv")),
+                                read.csv("./results/ngram_benchmark.csv") %>% 
+                                  mutate(error = sqrt(mse),
+                                         opt = FALSE) %>% 
+                                  inner_join(read.csv("./data/full_names.csv"))
+)
 
-benchmark_ngram_length <- read.csv("./results/ngram_benchmark.csv") %>% 
-  mutate(error = sqrt(mse)) %>% 
-  inner_join(read.csv("./data/full_names.csv"))
+
 
 benchmark_ngram_length %>% 
-  ggplot(aes(x = factor(ngram_length), y = error, color = seq_type)) +
-  geom_point(position = position_dodge(0.2)) +
+  group_by(nice, ngram_length, seq_type, opt) %>%
+  summarise(mean_error = mean(error),
+            sd_error = sd(error)) %>%
+  mutate(upper = mean_error + sd_error,
+         lower = mean_error - sd_error) %>% 
+  ggplot(aes(x = factor(ngram_length), y = mean_error, color = opt, shape = seq_type,
+             ymax = upper, ymin = lower)) +
+  geom_point(size = 3, position = position_dodge(0.2)) +
+  #geom_errorbar() +
   scale_x_discrete("n-gram length") +
   facet_wrap(~ nice, scales = "free_y") +
   theme_bw()
