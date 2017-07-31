@@ -157,8 +157,7 @@ benchmark_ngram_length <- pblapply(2L:7, function(ngram_length) {
                             learnerRF <- makeLearner("regr.ranger")
                             learner_pars <- makeParamSet(
                               makeDiscreteParam("num.trees", values = c(500, 750, 1000)),
-                              makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
-                              makeDiscreteParam("mtry", values = round(c(n_features/4, n_features/3), 0))
+                              makeDiscreteParam("min.node.size", values = c(3, 5, 7))
                             )
                             
                             set.seed(1410)
