@@ -146,7 +146,7 @@ benchmark_ngram_length <- lapply(2L:7, function(ngram_length) {
                             dat <- conditions_dat[, c("Name", ith_condition)] %>% 
                               inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
                               select(-Name)
-                            
+                            browser()
                             predict_ngrams <- makeRegrTask(id = ith_condition, 
                                                            data = dat, 
                                                            target = ith_condition)
@@ -158,7 +158,7 @@ benchmark_ngram_length <- lapply(2L:7, function(ngram_length) {
                             learner_pars <- makeParamSet(
                               makeDiscreteParam("num.trees", values = c(500, 750, 1000)),
                               makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
-                              makeDiscreteParam("mtry", values = round(c(n_features/5, n_features/4, n_features/3), 0))
+                              makeDiscreteParam("mtry", values = round(c(n_features/4, n_features/3), 0))
                             )
                             
                             set.seed(1410)
