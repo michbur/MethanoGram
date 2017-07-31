@@ -88,79 +88,110 @@ all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 # grid.draw(venn.plot)
 # grid.newpage()
 
+configureMlr(show.info = FALSE)
 
-
-
-
-benchmark_ngram_length <- lapply(3L:7, function(ngram_length) {
-  
-  lapply(c("mcra_seqs", "rna_seqs"), function(ith_seqs) {
-    
-    ith_seqs_data <- seq_data[[ith_seqs]] 
-    ith_seqs_data <- ith_seqs_data[rownames(ith_seqs_data) %in% all_three, ]
-
-    ngram_matrix <- count_ngrams(ith_seqs_data, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
-    
-    normalized_ngrams <- ngram_matrix %>% 
-      as.matrix %>% 
-      data.frame %>% 
-      mutate(source = rownames(ith_seqs_data)) %>% 
-      group_by(source) %>% 
-      summarise_all(mean) 
-    
-    
-    bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt", 
-                          "mean_gn", "mean_ogn", "mean_gp", "mean_ogp"),
-                        function(ith_condition) {
-                          dat <- conditions_dat[, c("Name", ith_condition)] %>% 
-                            inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
-                            select(-Name)
-                          
-                          browser()
-                          
-                          predict_ngrams <- makeRegrTask(id = ith_condition, 
-                                                      data = dat, 
-                                                      target = ith_condition)
-                          
-                          
-                          filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", perc = 0.25)
-                          n_features <- filtered_ngrams[["task.desc"]][["n.feat"]][["numerics"]]
-                         
-                          learnerRF <- makeLearner("regr.ranger")
-                          learner_pars <- makeParamSet(
-                            makeDiscreteParam("num.trees", values = c(500, 600)),
-                            makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
-                            makeDiscreteParam("mtry", values = round(c(n_features/5, n_features/4, n_features/3), 0))
-                          )
-                          
-                          inner <- makeResampleDesc("Holdout")
-                          outer <- makeResampleDesc("CV", iters = 5)
-                          learnerRF_tuned <- makeTuneWrapper(learnerRF, 
-                                                            resampling = inner, 
-                                                            par.set = ps, 
-                                                            control = makeTuneControlGrid())
-                          
-                          trainedRF <- train(learnerRF_tuned, filtered_ngrams)
-                          nested_cv <- resample(learnerRF_tuned, filtered_ngrams, outer, extract = getTuneResult)
-                          
-                          set.seed(1410)
-                          benchmark(learnerRF, predict_par, makeResampleDesc("CV", iters = 5L))
-                        })
-    
-    
-    lapply(bench_res, function(i) 
-      data.frame(i)) %>% 
-      do.call(rbind, .) %>% 
-      mutate(ngram_length = ngram_length,
-             seq_type = ith_seqs)  
-  }) %>% 
+benchmark_ngram_length <- lapply(2L:7, function(ngram_length) {
+  lapply(c(0.25, 0.5, 1), function(feature_prop) {
+    lapply(c("both", "mcra_seqs", "rna_seqs"), function(ith_seqs) {
+      
+      if(ith_seqs == "both") {
+        
+        ith_seqs_data <- seq_data[["mcra_seqs"]] 
+        ith_seqs_data <- ith_seqs_data[rownames(ith_seqs_data) %in% all_three, ]
+        
+        ngram_matrix <- count_ngrams(ith_seqs_data, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
+        
+        mcra_ngrams <- ngram_matrix %>% 
+          as.matrix %>% 
+          data.frame %>% 
+          mutate(source = rownames(ith_seqs_data)) %>% 
+          group_by(source) %>% 
+          summarise_all(mean) 
+        
+        colnames(mcra_ngrams)[-1] <- paste0("mcra_", colnames(mcra_ngrams)[-1])
+        
+        ith_seqs_data <- seq_data[["rna_seqs"]] 
+        ith_seqs_data <- ith_seqs_data[rownames(ith_seqs_data) %in% all_three, ]
+        
+        ngram_matrix <- count_ngrams(ith_seqs_data, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
+        
+        rna_ngrams <- ngram_matrix %>% 
+          as.matrix %>% 
+          data.frame %>% 
+          mutate(source = rownames(ith_seqs_data)) %>% 
+          group_by(source) %>% 
+          summarise_all(mean) 
+        
+        colnames(rna_ngrams)[-1] <- paste0("rna_", colnames(rna_ngrams)[-1])
+        
+        normalized_ngrams <- cbind(rna_ngrams, mcra_ngrams[, -1])
+        
+      } else {
+        ith_seqs_data <- seq_data[[ith_seqs]] 
+        ith_seqs_data <- ith_seqs_data[rownames(ith_seqs_data) %in% all_three, ]
+        
+        ngram_matrix <- count_ngrams(ith_seqs_data, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
+        
+        normalized_ngrams <- ngram_matrix %>% 
+          as.matrix %>% 
+          data.frame %>% 
+          mutate(source = rownames(ith_seqs_data)) %>% 
+          group_by(source) %>% 
+          summarise_all(mean) 
+      }
+      
+      bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt", 
+                            "mean_gn", "mean_ogn", "mean_gp", "mean_ogp"),
+                          function(ith_condition) {
+                            dat <- conditions_dat[, c("Name", ith_condition)] %>% 
+                              inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
+                              select(-Name)
+                            
+                            predict_ngrams <- makeRegrTask(id = ith_condition, 
+                                                           data = dat, 
+                                                           target = ith_condition)
+                            
+                            filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", perc = feature_prop)
+                            n_features <- filtered_ngrams[["task.desc"]][["n.feat"]][["numerics"]]
+                            
+                            learnerRF <- makeLearner("regr.ranger")
+                            learner_pars <- makeParamSet(
+                              makeDiscreteParam("num.trees", values = c(500, 750, 1000)),
+                              makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
+                              makeDiscreteParam("mtry", values = round(c(n_features/5, n_features/4, n_features/3), 0))
+                            )
+                            
+                            set.seed(1410)
+                            
+                            inner <- makeResampleDesc("Holdout")
+                            outer <- makeResampleDesc("CV", iters = 5)
+                            learnerRF_tuned <- makeTuneWrapper(learnerRF, 
+                                                               resampling = inner, 
+                                                               par.set = learner_pars, 
+                                                               control = makeTuneControlGrid())
+                            
+                            trainedRF <- train(learnerRF_tuned, filtered_ngrams)
+                            nested_cv <- resample(learnerRF_tuned, filtered_ngrams, outer, extract = getTuneResult)
+                            
+                            getNestedTuneResultsOptPathDf(nested_cv)
+                          })
+      
+      lapply(bench_res, function(i) 
+        data.frame(i)) %>% 
+        do.call(rbind, .) %>% 
+        mutate(ngram_length = ngram_length,
+               seq_type = ith_seqs,
+               feature_prop = feature_prop)  
+    }) %>% 
+      do.call(rbind, .)
+  }) %>%
     do.call(rbind, .)
 }) %>%
   do.call(rbind, .)
 
-write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark.csv", row.names = FALSE)
+write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark_multi.csv", row.names = FALSE)
 
- 
+
 # group_by(task.id) %>% 
 #   summarise(mse = mean(mse)) %>% 
 #   mutate(error = sqrt(mse),
