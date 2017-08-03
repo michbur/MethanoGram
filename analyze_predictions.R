@@ -74,3 +74,14 @@ rbind(lapply(list("growth_doubl",
         do.call(rbind, .) %>% 
         mutate(only_optim = FALSE)) %>% 
   write.csv(file = "./results/all_res.csv", row.names = FALSE)
+
+library(xtable)
+read.csv("./results/ngram_benchmark_opt.csv") %>% 
+  mutate(error = sqrt(mse),
+         opt = TRUE) %>% 
+  inner_join(read.csv("./data/full_names.csv")) %>% 
+  group_by(nice) %>% 
+  summarise(`Error (mean)` = mean(error),
+            `Error (SD)` = sd(error)) %>% 
+  xtable %>% 
+  print(include.rownames = FALSE)

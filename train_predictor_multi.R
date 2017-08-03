@@ -36,31 +36,19 @@ seq_data <- list(mcra_seqs = mcra_seqs,
 
 conditions_dat <- raw_dat[c("Name", 
                             "Growth.doubling.time..h.", "Growth.rate", 
-                            "Min..growth.temp.", "Max..growth.temp.", 
-                            "Min..optimal.growth.temp.", "Max..optimal.growth.temp.",  
-                            "Min..growth.NaCl", "Max..growth.NaCl", 
+                            "Min..optimal.growth.temp.", "Max..optimal.growth.temp.",
                             "Min..optimal.growth.NaCl", "Max..optimal.growth.NaCl", 
-                            "Min..growth.pH", "Max..growth.pH", 
                             "Min..optimal.growth.pH", "Max..optimal.growth.pH")] %>% 
   rename(growth_doubl = Growth.doubling.time..h.,
          growth_rate = Growth.rate,
-         min_gt = Min..growth.temp.,
-         max_gt = Max..growth.temp.,
          min_ogt = Min..optimal.growth.temp.,
          max_ogt = Max..optimal.growth.temp.,
-         min_gn = Min..growth.NaCl,
-         max_gn = Max..growth.NaCl,
          min_ogn = Min..optimal.growth.NaCl,
          max_ogn = Max..optimal.growth.NaCl,
-         min_gp = Min..growth.pH,
-         max_gp = Max..growth.pH,
          min_ogp = Min..optimal.growth.pH,
          max_ogp = Max..optimal.growth.pH) %>% 
-  mutate(mean_gt = (min_gt + max_gt)/2,
-         mean_ogt = (min_ogt + max_ogt)/2,
-         mean_gn = (min_gn + max_gn)/2,
+  mutate(mean_ogt = (min_ogt + max_ogt)/2,
          mean_ogn = (min_ogn + max_ogn)/2,
-         mean_gp = (min_gp + max_gp)/2,
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
   na.omit
 
