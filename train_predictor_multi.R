@@ -36,19 +36,31 @@ seq_data <- list(mcra_seqs = mcra_seqs,
 
 conditions_dat <- raw_dat[c("Name", 
                             "Growth.doubling.time..h.", "Growth.rate", 
-                            "Min..optimal.growth.temp.", "Max..optimal.growth.temp.",
+                            "Min..growth.temp.", "Max..growth.temp.", 
+                            "Min..optimal.growth.temp.", "Max..optimal.growth.temp.",  
+                            "Min..growth.NaCl", "Max..growth.NaCl", 
                             "Min..optimal.growth.NaCl", "Max..optimal.growth.NaCl", 
+                            "Min..growth.pH", "Max..growth.pH", 
                             "Min..optimal.growth.pH", "Max..optimal.growth.pH")] %>% 
   rename(growth_doubl = Growth.doubling.time..h.,
          growth_rate = Growth.rate,
+         min_gt = Min..growth.temp.,
+         max_gt = Max..growth.temp.,
          min_ogt = Min..optimal.growth.temp.,
          max_ogt = Max..optimal.growth.temp.,
+         min_gn = Min..growth.NaCl,
+         max_gn = Max..growth.NaCl,
          min_ogn = Min..optimal.growth.NaCl,
          max_ogn = Max..optimal.growth.NaCl,
+         min_gp = Min..growth.pH,
+         max_gp = Max..growth.pH,
          min_ogp = Min..optimal.growth.pH,
          max_ogp = Max..optimal.growth.pH) %>% 
-  mutate(mean_ogt = (min_ogt + max_ogt)/2,
+  mutate(mean_gt = (min_gt + max_gt)/2,
+         mean_ogt = (min_ogt + max_ogt)/2,
+         mean_gn = (min_gn + max_gn)/2,
          mean_ogn = (min_ogn + max_ogn)/2,
+         mean_gp = (min_gp + max_gp)/2,
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
   na.omit
 
@@ -78,7 +90,7 @@ all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 configureMlr(show.info = FALSE)
 
-benchmark_ngram_length <- pblapply(2L:7, function(ngram_length) {
+benchmark_ngram_length <- pblapply(2L:3, function(ngram_length) {
   lapply(c(0.25, 0.5, 1), function(feature_prop) {
     lapply(c("both", "mcra_seqs", "rna_seqs"), function(ith_seqs) {
       
@@ -128,8 +140,8 @@ benchmark_ngram_length <- pblapply(2L:7, function(ngram_length) {
           summarise_all(mean) 
       }
       
-      bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_gt", "mean_ogt", 
-                            "mean_gn", "mean_ogn", "mean_gp", "mean_ogp"),
+      bench_res <- lapply(c("growth_doubl", "growth_rate", "mean_ogt", 
+                            "mean_ogn", "mean_ogp"),
                           function(ith_condition) {
                             dat <- conditions_dat[, c("Name", ith_condition)] %>% 
                               inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
@@ -141,17 +153,19 @@ benchmark_ngram_length <- pblapply(2L:7, function(ngram_length) {
                             
                             filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", perc = feature_prop)
                             n_features <- filtered_ngrams[["task.desc"]][["n.feat"]][["numerics"]]
+                            mtry_possibilities <- unique(round(c(n_features/4, n_features/3, n_features/2), 0))
                             
                             learnerRF <- makeLearner("regr.ranger")
                             learner_pars <- makeParamSet(
-                              makeDiscreteParam("num.trees", values = c(500, 750, 1000)),
-                              makeDiscreteParam("min.node.size", values = c(3, 5, 7))
+                              makeDiscreteParam("num.trees", values = c(250, 500, 750, 1000)),
+                              makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
+                              makeDiscreteParam("mtry", values = mtry_possibilities)
                             )
                             
                             set.seed(1410)
                             
-                            inner <- makeResampleDesc("Holdout")
-                            outer <- makeResampleDesc("CV", iters = 5)
+                            inner <- makeResampleDesc("CV", iters = 5)
+                            outer <- makeResampleDesc("CV", iters = 3)
                             learnerRF_tuned <- makeTuneWrapper(learnerRF, 
                                                                resampling = inner, 
                                                                par.set = learner_pars, 
@@ -160,7 +174,9 @@ benchmark_ngram_length <- pblapply(2L:7, function(ngram_length) {
                             trainedRF <- train(learnerRF_tuned, filtered_ngrams)
                             nested_cv <- resample(learnerRF_tuned, filtered_ngrams, outer, extract = getTuneResult)
                             
-                            getNestedTuneResultsOptPathDf(nested_cv)
+                            dat <- getNestedTuneResultsOptPathDf(nested_cv) 
+                            group_by(dat, mtry, num.trees, min.node.size) %>% 
+                              summarise(mean = mean(mse.test.mean))
                           })
       
       lapply(bench_res, function(i) 
