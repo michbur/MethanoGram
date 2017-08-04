@@ -1,0 +1,62 @@
+---
+title: "Report 4-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+opts_chunk$set(echo = FALSE, warning = FALSE)
+```
+
+## Final results
+
+Evalutation method: Nested cross-validation
+Grid tuning: number of parameters considered at each split, number of trees, node size.
+
+Input data variants: sequence type (rRNA, mcra or both), feature selection, n-gram length.
+
+```{r}
+res <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
+  mutate(error = sqrt(mean),
+         error_r = round(error, 2)) %>% 
+  inner_join(read.csv("./data/full_names.csv"), by = c("task" = "task.id"))
+
+group_by(res, nice) %>% 
+  filter(error == min(error)) %>% 
+  select(Name = nice, `Mean error` = error_r) %>% 
+  kable
+```
+
+## Sequence input
+
+```{r, echo=FALSE,fig.height=8}
+group_by(res, seq_type, nice, ngram_length, feature_prop) %>% 
+  filter(error == min(error)) %>% 
+  ggplot(aes(x = factor(ngram_length), y = error, color = seq_type, shape = factor(feature_prop)))  +
+  geom_point(size = 3, position = position_dodge(0.2)) +
+  #geom_errorbar() +
+  scale_x_discrete("n-gram length") +
+  facet_wrap(~ nice, scales = "free_y", ncol = 2) +
+  theme_bw()
+```
+
+```{r, echo=FALSE,fig.height=8}
+
+lapply(c("Growth doubling time [h]", "Growth optimal NaCl", 
+         "Growth rate", "Optimal growth pH", 
+         "Optimal growth temp."), function(i) {
+  droplevels(res) %>% 
+  group_by(seq_type, nice, ngram_length, feature_prop) %>% 
+    filter(error == min(error), nice == i) %>% 
+    ggplot(aes(x = factor(ngram_length), y = error, color = seq_type, shape = factor(feature_prop)))  +
+    geom_point(size = 3, position = position_dodge(0.2)) +
+    #geom_errorbar() +
+    scale_x_discrete("n-gram length") +
+    theme_bw() +
+    ggtitle(i)
+})
+
+
+```
