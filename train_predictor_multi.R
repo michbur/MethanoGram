@@ -90,7 +90,7 @@ all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 configureMlr(show.info = FALSE)
 
-benchmark_ngram_length <- pblapply(2L:5, function(ngram_length) {
+benchmark_ngram_length <- pblapply(6L:7, function(ngram_length) {
   lapply(c(0.25, 0.5, 1), function(feature_prop) {
     lapply(c("both", "mcra_seqs", "rna_seqs"), function(ith_seqs) {
       
@@ -194,7 +194,7 @@ benchmark_ngram_length <- pblapply(2L:5, function(ngram_length) {
 }) %>%
   do.call(rbind, .)
 
-write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark_multi.csv", row.names = FALSE)
+write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark_multi2.csv", row.names = FALSE)
 
 
 # group_by(task.id) %>% 
