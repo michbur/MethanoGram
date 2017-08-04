@@ -90,7 +90,7 @@ all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 configureMlr(show.info = FALSE)
 
-benchmark_ngram_length <- pblapply(6L:7, function(ngram_length) {
+benchmark_ngram_length <- pblapply(2L:7, function(ngram_length) {
   lapply(c(0.25, 0.5, 1), function(feature_prop) {
     lapply(c("both", "mcra_seqs", "rna_seqs"), function(ith_seqs) {
       
@@ -175,10 +175,8 @@ benchmark_ngram_length <- pblapply(6L:7, function(ngram_length) {
                             nested_cv <- resample(learnerRF_tuned, filtered_ngrams, outer, extract = getTuneResult)
                             
                             dat <- getNestedTuneResultsOptPathDf(nested_cv) 
-
                             group_by(dat, mtry, num.trees, min.node.size) %>% 
-                              summarise(mean = mean(mse.test.mean)) %>% 
-                              mutate(task = ith_condition)
+                              summarise(mean = mean(mse.test.mean))
                           })
       
       lapply(bench_res, function(i) 
@@ -194,7 +192,7 @@ benchmark_ngram_length <- pblapply(6L:7, function(ngram_length) {
 }) %>%
   do.call(rbind, .)
 
-write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark_multi2.csv", row.names = FALSE)
+write.csv(benchmark_ngram_length, file = "./results/ngram_benchmark_multi.csv", row.names = FALSE)
 
 
 # group_by(task.id) %>% 

@@ -39,3 +39,21 @@ validate_seqs <- function(seqs) {
   
   validated_seqs
 }
+
+
+validate_seqs2 <- function(seqs) {
+  validated_seq_names <- lapply(seqs, function(i) 
+    attr(i, "name")) %>% 
+    unlist %>% 
+    sub("_", " ", .)
+    
+  # remove following nucleotides: c("r", "n", "b", "s", "m", "d", "w", "y", "k", "v")
+  only_standard_nucleotides <- sapply(seqs, function(i)
+    !any(c("r", "n", "b", "s", "m", "d", "w", "y", "k", "v") %in% i))
+  
+  validated_seqs <- list2matrix(seqs[only_standard_nucleotides])
+  
+  rownames(validated_seqs) <- sub("_", " ", rownames(validated_seqs))
+    
+  validated_seqs
+}
