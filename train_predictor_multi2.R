@@ -140,7 +140,7 @@ benchmark_ngram_length <- pblapply(2L:5, function(ngram_length)
             } else {
               mcra_seq
             }
-            seq_data[[ith_seqs]] 
+
             ith_seqs_data <- ith_seqs_data[rownames(ith_seqs_data) %in% all_three, ]
             
             ngram_matrix <- count_ngrams(ith_seqs_data, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
