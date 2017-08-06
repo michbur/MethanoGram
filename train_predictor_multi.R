@@ -1,3 +1,5 @@
+# this version was using wrong data types
+
 library(dplyr)
 library(biogram)
 library(seqinr)

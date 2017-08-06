@@ -41,7 +41,8 @@ validate_seqs <- function(seqs) {
 }
 
 
-validate_seqs2 <- function(seqs) {
+# RNA data has very odd input format
+validate_rna <- function(seqs) {
   validated_seq_names <- lapply(seqs, function(i) 
     attr(i, "name")) %>% 
     unlist %>% 
