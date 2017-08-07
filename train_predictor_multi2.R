@@ -189,7 +189,9 @@ benchmark_ngram_length <- pblapply(2L:5, function(ngram_length)
                                 
                                 dat <- getNestedTuneResultsOptPathDf(nested_cv) 
                                 group_by(dat, mtry, num.trees, min.node.size) %>% 
-                                  summarise(mean = mean(mse.test.mean))
+                                  summarise(mean_error = mean(mse.test.mean),
+                                            sd_error = sd(mse.test.mean)) %>% 
+                                  mutate(task.id = ith_condition)
                               })
           
           lapply(bench_res, function(i) 
