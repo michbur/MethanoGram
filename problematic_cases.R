@@ -137,5 +137,12 @@ jackknife_res <- lapply(1L:nrow(opt_pars), function(ith_row) {
     select(task.id, source, truth, error) 
 })  
 
+full_problematic <- do.call(rbind, jackknife_res) %>% 
+  left_join(read.csv("./data/full_names.csv")) %>% 
+  select(name = nice, source, truth, error)
 
-jackknife_res
+decile_problematic <- group_by(full_problematic, name) %>% 
+  filter(error >= quantile(error, 0.9))
+
+write.csv(full_problematic, file = "all_errors.csv", row.names = FALSE)
+write.csv(decile_problematic, file = "decile_errors.csv", row.names = FALSE)

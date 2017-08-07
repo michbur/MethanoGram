@@ -1,0 +1,27 @@
+"name","source","truth","error"
+"Optimal growth pH","Methanoregula boonei",5.1,1.90856130952381
+"Optimal growth pH","Methanosphaerula palustris",5.5,1.54771956349207
+"Optimal growth pH","Methanobacterium subterraneum",8.3,1.35016714285714
+"Optimal growth pH","Methanospirillum hungatei",8,1.05624904761905
+"Optimal growth pH","Methanobacterium kanagiense",8,1.01619857142857
+"Optimal growth pH","Methanobacterium flexile",8,0.972926507936499
+"Growth rate","Methanopyrus kandleri",3.03,1.54377933333333
+"Growth rate","Methanothermococcus okinawensis",1.386,1.04913888888889
+"Growth rate","Methanocaldococcus fervens",2.1,0.627685333333331
+"Growth rate","Methanocaldococcus vulcanius",1.05,0.627590222222221
+"Growth rate","Methanococcus aeolicus",0.5,0.410535333333333
+"Growth rate","Methanocaldococcus infernus",1.35,0.323220444444442
+"Optimal growth temp.","Methanococcus maripaludis",85,24.7518333333333
+"Optimal growth temp.","Methanolobus psychrophilus",18,18.0003333333333
+"Optimal growth temp.","Methanosarcina baltica",21,15.8481666666666
+"Optimal growth temp.","Methanoculleus thermophilus",55,14.4561666666667
+"Optimal growth temp.","Methanopyrus kandleri",98,13.7406666666667
+"Optimal growth temp.","Methanolinea tarda",50,12.2678333333333
+"Growth doubling time [h]","Methanosarcina soligelidi",122.4,107.149466
+"Growth doubling time [h]","Methanolinea tarda",98,71.941154
+"Growth doubling time [h]","Methanofollis ethanolicus",72,55.55164
+"Growth doubling time [h]","Methanosarcina horonobensis",4.95,48.2277466666666
+"Growth optimal NaCl","Methanohalophilus portucalensis",1.25,1.02278617974
+"Growth optimal NaCl","Methanobacterium veterum",0.05,0.371626963809524
+"Growth optimal NaCl","Methermicoccus shengliensis",0.4,0.245189795977143
+"Growth optimal NaCl","Methanomethylovorans hollandica",0.04,0.239039114312381
