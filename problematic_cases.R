@@ -79,7 +79,7 @@ conditions_dat <- raw_dat[c("Name",
 
 train_seqs <- list(rna_seqs = rna_seqs[["RNA2"]], mcra_seqs = mcra_seqs[["McrA3"]])
 
-
+set.seed(1410)
 jackknife_res <- lapply(1L:nrow(opt_pars), function(ith_row) {
   mlr_pars <- opt_pars[ith_row, ]
 
@@ -134,7 +134,7 @@ jackknife_res <- lapply(1L:nrow(opt_pars), function(ith_row) {
            source = dat_names[id],
            task.id = ith_condition) %>% 
     arrange(desc(error)) %>%
-    select(task.id, source, truth, error) 
+    select(task.id, source, truth, estimated = response, error) 
 })  
 
 full_problematic <- do.call(rbind, jackknife_res) %>% 

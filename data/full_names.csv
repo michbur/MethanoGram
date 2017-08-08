@@ -4,6 +4,6 @@ growth_rate,Growth rate
 mean_gt,Growth temp.
 mean_ogt,Optimal growth temp.
 mean_gn,Growth NaCl
-mean_ogn,Growth optimal NaCl
+mean_ogn,Optimal growth NaCl
 mean_gp,Growth pH
 mean_ogp,Optimal growth pH
