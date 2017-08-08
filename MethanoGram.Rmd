@@ -1,0 +1,28 @@
+---
+title: "MethanoGram"
+author: "Michal Burdukiewicz"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+MethanoGram is a predictor of culturing conditions of methanogenes. Using random forests trained on n-gram encoded 16 rRNA and mcrA sequences, MethanoGram is able to estimate:
+* growth rate, 
+* growth doubling time [h], 
+* optimal growth temperature, 
+* optimal growth pH,
+* optimal growth NaCl.
+
+Here we document the process of tuning and evalutation of set of classifiers constituting MethanoGram.
+
+# Tuning and evaluation of MethanoGram
+
+## Data sets 
+
+To train MethanoGram we used n-grams (subsequences of length $n$) extrated from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culturing conditions described in the database (both optimal and non-optimal). In other words, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culturing conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl).
+
+We considered two different sets of 16 rRNA sequences and three different sets of mcrA sequences. We removed all sequences containing atypical or unknown nucleotides (b, d, k, m, n, r, s, v, w, y)
