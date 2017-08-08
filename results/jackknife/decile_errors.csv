@@ -1,0 +1,51 @@
+"name","source","truth","estimated","error","relative_error"
+"Optimal growth pH","Methanoregula boonei",5.1,7.01515785714286,1.91515785714286,0.375521148459384
+"Optimal growth pH","Methanosphaerula palustris",5.5,7.02110380952381,1.52110380952381,0.276564329004328
+"Optimal growth pH","Methanobacterium subterraneum",8.3,6.94089726190477,1.35910273809523,0.163747317842799
+"Optimal growth pH","Methanospirillum hungatei",8,6.93232642857143,1.06767357142857,0.133459196428572
+"Optimal growth pH","Methanobacterium kanagiense",8,6.96337214285714,1.03662785714286,0.129578482142857
+"Optimal growth pH","Methanolobus taylorii",7.85,6.87842892857143,0.971571071428571,0.123767015468608
+"Optimal growth pH","Methanobacterium flexile",8,7.03931833333333,0.960681666666668,0.120085208333333
+"Optimal growth pH","Methanococcus maripaludis",6,6.9092255952381,0.909225595238099,0.15153759920635
+"Optimal growth pH","Methanosarcina soligelidi",7.8,6.99887666666667,0.801123333333333,0.10270811965812
+"Optimal growth pH","Methermicoccus shengliensis",6.25,7.00612353174604,0.756123531746038,0.120979765079366
+"Optimal growth pH","Methanobacterium lacus",6.5,7.23598047619048,0.735980476190483,0.113227765567767
+"Optimal growth pH","Methanotorris igneus",5.7,6.37986285714286,0.67986285714286,0.11927418546366
+"Growth rate","Methanopyrus kandleri",3.03,1.46917555555556,1.56082444444444,0.515123579024569
+"Growth rate","Methanothermococcus okinawensis",1.386,0.362712222222222,1.02328777777778,0.738302869969537
+"Growth rate","Methanocaldococcus vulcanius",1.05,1.69795955555555,0.647959555555555,0.617104338624338
+"Growth rate","Methanocaldococcus fervens",2.1,1.49712977777778,0.602870222222224,0.287081058201059
+"Growth rate","Methanococcus aeolicus",0.5,0.0782075555555556,0.421792444444444,0.843584888888889
+"Growth rate","Methanocaldococcus infernus",1.35,1.67733511111111,0.327335111111113,0.242470452674898
+"Growth rate","Methermicoccus shengliensis",0.139,0.462702888888888,0.323702888888888,2.32879776179056
+"Growth rate","Methanothermobacter crinale",0.046,0.303336,0.257336,5.59426086956522
+"Growth rate","Methanoculleus thermophilus",0.277,0.0662131111111113,0.210786888888889,0.760963497793822
+"Growth rate","Methanotorris igneus",1.662,1.46281266666666,0.199187333333336,0.11984797432812
+"Growth rate","Methanothermococcus thermolithotrophicus",0.756,0.58233088888889,0.17366911111111,0.229721046443267
+"Growth rate","Methanococcus maripaludis",0.35,0.522632222222221,0.172632222222221,0.493234920634916
+"Optimal growth temp.","Methanococcus maripaludis",85,60.768,24.232,0.285082352941177
+"Optimal growth temp.","Methanolobus psychrophilus",18,36.0971666666667,18.0971666666667,1.00539814814815
+"Optimal growth temp.","Methanosarcina baltica",21,37.1026666666667,16.1026666666667,0.76679365079365
+"Optimal growth temp.","Methanoculleus thermophilus",55,40.8263333333333,14.1736666666667,0.25770303030303
+"Optimal growth temp.","Methanopyrus kandleri",98,84.1506666666667,13.8493333333333,0.141319727891156
+"Optimal growth temp.","Methanomethylovorans thermophila",50,37.3743333333333,12.6256666666667,0.252513333333334
+"Optimal growth temp.","Methanolinea tarda",50,37.8683333333333,12.1316666666667,0.242633333333334
+"Optimal growth temp.","Methanosarcina soligelidi",28,38.3911666666667,10.3911666666667,0.371113095238095
+"Optimal growth temp.","Methanothermobacter tenebrarum",70,60.4785,9.52150000000001,0.136021428571429
+"Optimal growth temp.","Methanobacterium lacus",30,38.518,8.518,0.283933333333333
+"Optimal growth temp.","Methanospirillum lacunae",30,38.3538333333333,8.35383333333333,0.278461111111111
+"Optimal growth temp.","Methanolobus vulcani",40,31.7035,8.29649999999999,0.2074125
+"Growth doubling time [h]","Methanosarcina soligelidi",122.4,13.8885973333333,108.511402666667,0.886531067538126
+"Growth doubling time [h]","Methanolinea tarda",98,27.524246,70.475754,0.719140346938776
+"Growth doubling time [h]","Methanofollis ethanolicus",72,19.1840406666667,52.8159593333333,0.733554990740741
+"Growth doubling time [h]","Methanosarcina horonobensis",4.95,54.6369953333333,49.6869953333333,10.0377768350168
+"Growth doubling time [h]","Methanocorpusculum labreanum",9.2,37.105528,27.905528,3.03320956521739
+"Growth doubling time [h]","Methermicoccus shengliensis",5,25.032622,20.032622,4.0065244
+"Growth doubling time [h]","Methanohalophilus portucalensis",5,23.6980193333333,18.6980193333333,3.73960386666666
+"Optimal growth NaCl","Methanohalophilus portucalensis",1.25,0.229393240415238,1.02060675958476,0.81648540766781
+"Optimal growth NaCl","Methanobacterium veterum",0.05,0.378159681691429,0.328159681691429,6.56319363382857
+"Optimal growth NaCl","Methanobacterium lacus",0.1,0.374963587214286,0.274963587214286,2.74963587214286
+"Optimal growth NaCl","Methanothermococcus thermolithotrophicus",0.684463,0.436057000447619,0.248405999552381,0.362921004572023
+"Optimal growth NaCl","Methermicoccus shengliensis",0.4,0.155397237921905,0.244602762078095,0.611506905195238
+"Optimal growth NaCl","Methanomethylovorans hollandica",0.04,0.283925620738095,0.243925620738095,6.09814051845238
+"Optimal growth NaCl","Methanococcus aeolicus",0.3,0.520021625778095,0.220021625778095,0.733405419260318

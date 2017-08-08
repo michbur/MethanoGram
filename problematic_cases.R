@@ -134,15 +134,16 @@ jackknife_res <- lapply(1L:nrow(opt_pars), function(ith_row) {
            source = dat_names[id],
            task.id = ith_condition) %>% 
     arrange(desc(error)) %>%
-    select(task.id, source, truth, estimated = response, error) 
+    select(task.id, source, truth, estimated = response, error) %>% 
+    mutate(relative_error = error/truth)
 })  
 
 full_problematic <- do.call(rbind, jackknife_res) %>% 
   left_join(read.csv("./data/full_names.csv")) %>% 
-  select(name = nice, source, truth, error)
+  select(name = nice, source, truth, estimated, error, )
 
 decile_problematic <- group_by(full_problematic, name) %>% 
-  filter(error >= quantile(error, 0.9))
+  filter(error >= quantile(error, 0.8))
 
-write.csv(full_problematic, file = "all_errors.csv", row.names = FALSE)
-write.csv(decile_problematic, file = "decile_errors.csv", row.names = FALSE)
+write.csv(full_problematic, file = "./results/jackknife/all_errors.csv", row.names = FALSE)
+write.csv(decile_problematic, file = "./results/jackknife/decile_errors.csv", row.names = FALSE)
