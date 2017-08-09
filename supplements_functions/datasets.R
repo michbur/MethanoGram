@@ -1,8 +1,7 @@
 library(dplyr)
-library(biogram)
 library(seqinr)
-library(pbapply)
-library(mlr)
+library(gridExtra)
+library(biogram)
 
 source("./functions/validate_seqs.R")
 
@@ -74,7 +73,7 @@ both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique
 both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(rna_seqs)))
 all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
-lapply(names(rna_seqs), function(rna_seq_name)
+venn_dat <- lapply(names(rna_seqs), function(rna_seq_name)
   lapply(names(mcra_seqs), function(mcra_seq_name)
     lapply(c("mcra_seqs", "rna_seqs"), function(ith_seqs) {
       rna_seq <- rna_seqs[[rna_seq_name]]
@@ -85,17 +84,55 @@ lapply(names(rna_seqs), function(rna_seq_name)
       both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(rna_seq)))
       all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
       
-      list(rna = rna_seq_name,
-           mcra = mcra_seq_name,
-           c(
-        rna_seq = length(unique(rownames(rna_seq))),
-        mcra_seq = length(unique(rownames(mcra_seq))),
-        conditions = length(as.character(conditions_dat[["Name"]])),
-        both_mcra_rna = length(both_mcra_rna),
-        both_mcra_conditions = length(both_mcra_conditions),
-        both_rna_conditions = length(both_rna_conditions),
-        all_three = length(all_three)
-        ))
-    }) 
-  )
-)
+      data.frame(rna = rna_seq_name,
+                 mcra = mcra_seq_name,
+                 rna_seq = length(unique(rownames(rna_seq))),
+                 mcra_seq = length(unique(rownames(mcra_seq))),
+                 conditions = length(as.character(conditions_dat[["Name"]])),
+                 both_mcra_rna = length(both_mcra_rna),
+                 both_mcra_conditions = length(both_mcra_conditions),
+                 both_rna_conditions = length(both_rna_conditions),
+                 all_three = length(all_three),
+                 species = paste0(all_three, collapse = ", ")
+                 )
+    }) %>% 
+      do.call(rbind, .)
+  ) %>% 
+    do.call(rbind, .)
+) %>% 
+  do.call(rbind, .) %>% 
+  filter(!duplicated(.))
+
+library(VennDiagram)
+
+
+venn_plots <- lapply(1L:nrow(venn_dat), function(ith_row_id) {
+  ith_row <- venn_dat[ith_row_id, ]
+
+  draw.triple.venn(ith_row[["rna_seq"]],
+                   ith_row[["mcra_seq"]],
+                   ith_row[["conditions"]],
+                   ith_row[["both_mcra_rna"]],
+                   ith_row[["both_mcra_conditions"]],
+                   ith_row[["both_rna_conditions"]],
+                   ith_row[["all_three"]],
+                   # c(as.character(ith_row[["rna"]]),
+                   #   as.character(ith_row[["mcra"]]),
+                   #   "Known conditions"),
+                   c("16 rRNA",
+                     "mcrA",
+                     "Known culturing conditions"),
+                   fill = c("#f1a340", "#998ec3", "#f7f7f7"),
+                   ind = FALSE)
+})
+
+# for(i in 1L:length(venn_plots)) {
+#   cat("\n\n##", i, "\n\n", sep = " ")
+#   grid.draw(venn_plots[[i]])
+#   grid.newpage()
+#   cat("\n\n\\pagebreak\n\n")
+# }
+
+
+#select(venn_dat, rna, mcra, rna_seq, mcra_seq, all_three)
+#filter(select, rna == "RNA1", mcra == "McrA1")

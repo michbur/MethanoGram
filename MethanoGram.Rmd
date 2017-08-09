@@ -1,16 +1,19 @@
 ---
 title: "MethanoGram"
 author: "Michal Burdukiewicz"
-output: pdf_document
+output: 
+  pdf_document: 
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 # Introduction
 
 MethanoGram is a predictor of culturing conditions of methanogenes. Using random forests trained on n-gram encoded 16 rRNA and mcrA sequences, MethanoGram is able to estimate:
+
 * growth rate, 
 * growth doubling time [h], 
 * optimal growth temperature, 
@@ -23,6 +26,28 @@ Here we document the process of tuning and evalutation of set of classifiers con
 
 ## Data sets 
 
-To train MethanoGram we used n-grams (subsequences of length $n$) extrated from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culturing conditions described in the database (both optimal and non-optimal). In other words, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culturing conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl).
+To train MethanoGram we used n-grams (subsequences of length $n$) extrated from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culturing conditions described in the database (both optimal and non-optimal). Thus, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culturing conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl). 
 
-We considered two different sets of 16 rRNA sequences and three different sets of mcrA sequences. We removed all sequences containing atypical or unknown nucleotides (b, d, k, m, n, r, s, v, w, y)
+We considered two different sets of 16 rRNA sequences and three different sets of mcrA sequences. We removed all sequences containing atypical or unknown nucleotides (b, d, k, m, n, r, s, v, w, y). After purification steps described above we ended with 60 methanogenes (Fig. \ref{fig:venn}).
+
+
+```{r,message=FALSE,fig.height=3,fig.width=4,results='asis',fig.cap="The Venn diagram of methanogens species in the analysis.\\label{fig:venn}"}
+source("./supplements_functions/datasets.R")
+
+grid.draw(venn_plots[[4]])
+grid.newpage()
+```
+
+## Random forest tuning 
+
+We chose the random forests implementated in the **ranger** R package for estimation of culturing conditions, because of its speed and high accuracy. We have optimized three parameters: a number of variables to possibly split at in each node, a number of trees in the forest and a minimal node size. In the tuning procedure we also incorporated different levels of feature selection and n-gram lenghts.
+
+### n-gram length
+
+We considered continous 2-, 3-, 4- and 5-grams. The number of possible n-grams for a nucleotide sequence is equal to $4^n$, so the number of feature ranges between 16 (for 2-grams) to 1024 (for 5-grams). Since further increases in the n-gram size were not providing the algorithm with satisfying descrese in the error, we did not considered longer n-grams. 
+
+### Feature selection
+
+To select the most informative n-grams, we used Pearson's correlation between the feature and the target as implemented in the Rfast package. We retained a fraction of features instead of an absolute number of features to keep the feature selection consistent between datasets with varying number of features. We considered following fractions of features: 0.25, 0.5 and 1 (when we do not select any features). In all cases, the strictest feature selection (0.25) proved to create the most efficient classifiers.
+
+### Number of variables to possibly split at in each node

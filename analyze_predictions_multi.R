@@ -38,7 +38,7 @@ ggplot(dat_type, aes(x = task.id, y = mean_error,
 
 # select McrA3 i RNA2, feature_prop 0.25
 
-filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>% 
+filter(res, rna_type == "RNA2", mcra_type == "McrA1", feature_prop == 0.25) %>% 
   group_by(nice) %>% 
   filter(mean_error == min(mean_error)) %>% 
   mutate(mean_error = formatC(mean_error, digits = 2, format = "g")) %>% 
@@ -57,4 +57,15 @@ filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>%
   ungroup() %>% 
   slice(c(2, 4, 3, 1, 5)) %>% 
   write.csv(file = "nested_cv.csv", row.names = FALSE)
+
+library(ggbeeswarm)
+
+ith_condition <- levels(res[["nice"]])[1]
+filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25,
+       nice == ith_condition) %>% 
+  ggplot(aes(x = factor(ngram_length), y = mean_error, color = factor(seq_type), 
+             shape = factor(min.node.size))) +
+  geom_quasirandom() +
+  facet_wrap(~num.trees, ncol = 4) +
+  theme_bw()
 
