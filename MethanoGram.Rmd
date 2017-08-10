@@ -24,11 +24,11 @@ Here we document the process of tuning and evalutation of set of classifiers con
 
 # Tuning and evaluation of MethanoGram
 
-## Data sets 
+## Datasets 
 
 To train MethanoGram we used n-grams (subsequences of length $n$) extrated from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culturing conditions described in the database (both optimal and non-optimal). Thus, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culturing conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl). 
 
-We considered two different sets of 16 rRNA sequences and three different sets of mcrA sequences. We removed all sequences containing atypical or unknown nucleotides (b, d, k, m, n, r, s, v, w, y). After purification steps described above we ended with 60 methanogenes (Fig. \ref{fig:venn}).
+We considered two different sets of 16 rRNA sequences and three different sets of mcrA sequences. We removed all sequences containing atypical or unknown nucleotides (b, d, k, m, n, r, s, v, w, y). After purification steps described above we ended with 60 methanogenes (Fig. \ref{fig:venn}). 
 
 
 ```{r,message=FALSE,fig.height=3,fig.width=4,results='asis',fig.cap="The Venn diagram of methanogens species in the analysis.\\label{fig:venn}"}
@@ -45,6 +45,15 @@ We chose the random forests implementated in the **ranger** R package for estima
 ### n-gram length
 
 We considered continous 2-, 3-, 4- and 5-grams. The number of possible n-grams for a nucleotide sequence is equal to $4^n$, so the number of feature ranges between 16 (for 2-grams) to 1024 (for 5-grams). Since further increases in the n-gram size were not providing the algorithm with satisfying descrese in the error, we did not considered longer n-grams. 
+
+### n-gram source
+
+The algorithm was trained on n-grams extracted from:
+
+* 16 rRNA,
+* mcrA,
+* 16 rRNA and mcrA.
+
 
 ### Feature selection
 
