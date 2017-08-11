@@ -54,6 +54,8 @@ The algorithm was trained on n-grams extracted from:
 * mcrA,
 * 16 rRNA and mcrA.
 
+In the third case, n-grams were annotated by their source. For example, in the case of bigrams, GA_RNA and GA_mcrA (bigram GA coming from RNA and mcrA) were treated as two different features.
+
 
 ### Feature selection
 
