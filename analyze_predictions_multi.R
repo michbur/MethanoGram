@@ -5,7 +5,8 @@ library(xtable)
 res <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
   mutate(mean_error = sqrt(mean_error),
          sd_error = sqrt(sd_error)) %>% 
-  left_join(read.csv("./data/full_names.csv"))
+  left_join(read.csv("./data/full_names.csv")) %>% 
+  droplevels()
 
 group_by(res, nice) %>% 
   filter(mean_error == min(mean_error)) %>% 
@@ -49,6 +50,11 @@ filter(res, rna_type == "RNA2", mcra_type == "McrA1", feature_prop == 0.25) %>%
          label = "tab:nested_cv") %>% 
   print(include.rownames = FALSE)
 
+filter(res, rna_type == "RNA2", mcra_type == "McrA1", feature_prop == 0.25) %>% 
+  group_by(nice) %>% 
+  filter(mean_error == min(mean_error)) %>% 
+  select(mtry, ngram_length)
+
 filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>% 
   group_by(nice) %>% 
   filter(mean_error == min(mean_error)) %>% 
@@ -61,11 +67,24 @@ filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>%
 library(ggbeeswarm)
 
 ith_condition <- levels(res[["nice"]])[1]
-filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25,
-       nice == ith_condition) %>% 
-  ggplot(aes(x = factor(ngram_length), y = mean_error, color = factor(seq_type), 
-             shape = factor(min.node.size))) +
-  geom_quasirandom() +
-  facet_wrap(~num.trees, ncol = 4) +
-  theme_bw()
+
+lapply(levels(res[["nice"]]), function(ith_condition) {
+  filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25,
+         nice == ith_condition) %>% 
+    mutate(num.trees_nice = paste0("Number of trees: ", num.trees),
+           seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA"))) %>% 
+    ggplot(aes(x = factor(ngram_length), y = mean_error, color = factor(seq_type), 
+               shape = factor(min.node.size))) +
+    geom_quasirandom() +
+    facet_wrap(~ num.trees_nice, ncol = 4) +
+    theme_bw() +
+    scale_y_continuous("Mean error") +
+    scale_x_discrete("n-gram length") +
+    scale_color_discrete("Data source") +
+    scale_shape_discrete("Minimum node size") +
+    ggtitle(ith_condition) +
+    theme(legend.position = "bottom",
+          legend.box = "vertical")
+})
+
 
