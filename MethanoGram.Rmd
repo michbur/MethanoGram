@@ -8,6 +8,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+library(ggplot2)
+library(ggbeeswarm)
 ```
 
 # Introduction
@@ -56,9 +58,51 @@ The algorithm was trained on n-grams extracted from:
 
 In the third case, n-grams were annotated by their source. For example, in the case of bigrams, GA_RNA and GA_mcrA (bigram GA coming from RNA and mcrA) were treated as two different features.
 
-
 ### Feature selection
 
 To select the most informative n-grams, we used Pearson's correlation between the feature and the target as implemented in the Rfast package. We retained a fraction of features instead of an absolute number of features to keep the feature selection consistent between datasets with varying number of features. We considered following fractions of features: 0.25, 0.5 and 1 (when we do not select any features). In all cases, the strictest feature selection (0.25) proved to create the most efficient classifiers.
 
 ### Number of variables to possibly split at in each node
+
+In addition to the standard number of variables to possibly split at in each node for regresion tasks ($\frac{1}{3}$ of all considered features), we have also examined $\frac{1}{2}$ and $\frac{1}{4}$.  
+
+### Minimal node size
+
+Aside from the optimum number of variables to possibly split (5), we have also considered 3 and 7 variables. There were no visible patterns in the optimal value of the minimum node size. 
+
+# Tuning performance
+
+Below we present performance plots for all parameters considered during tuning of random forest predictors.
+
+```{r,message=FALSE,fig.height=6,fig.width=6,results='asis'}
+res <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
+  mutate(mean_error = sqrt(mean_error),
+         sd_error = sqrt(sd_error)) %>% 
+  left_join(read.csv("./data/full_names.csv")) %>% 
+  droplevels()
+
+
+part_plots <- lapply(levels(res[["nice"]]), function(ith_condition) {
+  filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25,
+         nice == ith_condition) %>% 
+    mutate(num.trees_nice = paste0("Number of trees: ", num.trees),
+           seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA"))) %>% 
+    ggplot(aes(x = factor(ngram_length), y = mean_error, color = factor(seq_type), 
+               shape = factor(min.node.size))) +
+    geom_quasirandom() +
+    facet_wrap(~ num.trees_nice, ncol = 4) +
+    theme_bw() +
+    scale_y_continuous("Mean error") +
+    scale_x_discrete("n-gram length") +
+    scale_color_discrete("Data source") +
+    scale_shape_discrete("Minimum node size") +
+    ggtitle(ith_condition) +
+    theme(legend.position = "bottom",
+          legend.box = "vertical")
+})
+
+for(i in part_plots) {
+  plot(i)
+  cat("\n\n\\pagebreak\n\n")
+}
+```
