@@ -121,7 +121,7 @@ venn_plots <- lapply(1L:nrow(venn_dat), function(ith_row_id) {
                    #   "Known conditions"),
                    c("16 rRNA",
                      "mcrA",
-                     "Known culturing conditions"),
+                     "Known culture conditions"),
                    fill = c("#f1a340", "#998ec3", "#f7f7f7"),
                    ind = FALSE)
 })

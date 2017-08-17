@@ -1,6 +1,6 @@
 ---
 title: "MethanoGram"
-author: "Michal Burdukiewicz"
+author: "Michał Burdukiewicz, Przemysław Gagat, Michał Gaworski, Sławomir Jabłoński, Paweł Mackiewicz, Marcin Łukaszewicz"
 output: 
   pdf_document: 
     toc: yes
@@ -14,7 +14,7 @@ library(ggbeeswarm)
 
 # Introduction
 
-MethanoGram is a predictor of culturing conditions of methanogenes. Using random forests trained on n-gram encoded 16 rRNA and mcrA sequences, MethanoGram is able to estimate:
+MethanoGram is a predictor of culture conditions of methanogenes. Using random forests trained on n-gram encoded 16 rRNA and mcrA sequences, MethanoGram is able to estimate:
 
 * growth rate, 
 * growth doubling time [h], 
@@ -28,12 +28,12 @@ Here we document the process of tuning and evalutation of set of classifiers con
 
 ## Datasets 
 
-To train MethanoGram we used n-grams (subsequences of length $n$) extrated from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culturing conditions described in the database (both optimal and non-optimal). Thus, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culturing conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl). 
+To train MethanoGram we used n-grams (subsequences of length $n$) extrated from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culture conditions described in the database (both optimal and non-optimal). Thus, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culture conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl). 
 
 We considered two different sets of 16 rRNA sequences and three different sets of mcrA sequences. We removed all sequences containing atypical or unknown nucleotides (b, d, k, m, n, r, s, v, w, y). After purification steps described above we ended with 60 methanogenes (Fig. \ref{fig:venn}). 
 
 
-```{r,message=FALSE,fig.height=3,fig.width=4,results='asis',fig.cap="The Venn diagram of methanogens species in the analysis.\\label{fig:venn}"}
+```{r,message=FALSE,fig.height=4,fig.width=4,results='asis',fig.cap="The Venn diagram of methanogens species in the analysis.\\label{fig:venn}"}
 source("./supplements_functions/datasets.R")
 
 grid.draw(venn_plots[[4]])
@@ -42,7 +42,7 @@ grid.newpage()
 
 ## Random forest tuning 
 
-We chose the random forests implementated in the **ranger** R package for estimation of culturing conditions, because of its speed and high accuracy. We have optimized three parameters: a number of variables to possibly split at in each node, a number of trees in the forest and a minimal node size. In the tuning procedure we also incorporated different levels of feature selection and n-gram lenghts.
+We chose the random forests implementated in the **ranger** R package for estimation of culture conditions, because of its speed and high accuracy. We have optimized three parameters: a number of variables to possibly split at in each node, a number of trees in the forest and a minimal node size. In the tuning procedure we also incorporated different levels of feature selection and n-gram lenghts.
 
 ### n-gram length
 
@@ -60,7 +60,7 @@ In the third case, n-grams were annotated by their source. For example, in the c
 
 ### Feature selection
 
-To select the most informative n-grams, we used Pearson's correlation between the feature and the target as implemented in the Rfast package. We retained a fraction of features instead of an absolute number of features to keep the feature selection consistent between datasets with varying number of features. We considered following fractions of features: 0.25, 0.5 and 1 (when we do not select any features). In all cases, the strictest feature selection (0.25) proved to create the most efficient classifiers.
+To select the most informative n-grams, we used Pearson's correlation between the feature and the target as implemented in the Rfast package. We retained a fraction of features instead of an absolute number of features to keep the feature selection consistent between datasets with varying number of features. We considered following fractions of features: 0.25 and 0.5. In all cases, the strictest feature selection (0.25) proved to create the most efficient classifiers.
 
 ### Number of variables to possibly split at in each node
 
@@ -72,25 +72,28 @@ Aside from the optimum number of variables to possibly split (5), we have also c
 
 # Tuning performance
 
-Below we present performance plots for all parameters considered during tuning of random forest predictors.
+Below we present beeswarm plots for all parameters tuned for MethanoGram.
 
-```{r,message=FALSE,fig.height=6,fig.width=6,results='asis'}
+```{r,message=FALSE,fig.height=9,fig.width=8,results='asis',warning=FALSE}
 res <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
   mutate(mean_error = sqrt(mean_error),
          sd_error = sqrt(sd_error)) %>% 
   left_join(read.csv("./data/full_names.csv")) %>% 
   droplevels()
 
-
+#lapply(4^(2L:5), function(n_features) unique(round(c(n_features/4, n_features/3, n_features/2), 0)))
+#lapply((4^(2L:5))*2, function(n_features) unique(round(c(n_features/4, n_features/3, n_features/2), 0)))
 part_plots <- lapply(levels(res[["nice"]]), function(ith_condition) {
-  filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25,
+  filter(res, rna_type == "RNA2", mcra_type == "McrA3",
          nice == ith_condition) %>% 
-    mutate(num.trees_nice = paste0("Number of trees: ", num.trees),
+    mutate(num.trees_nice = factor(paste0("Number of trees: ", num.trees)),
+           num.trees_nice = factor(num.trees_nice, levels = levels(num.trees_nice)[c(2L:4, 1)]),
+           feature_prop_nice = paste0("Fraction of retained features: ", feature_prop),
            seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA"))) %>% 
     ggplot(aes(x = factor(ngram_length), y = mean_error, color = factor(seq_type), 
                shape = factor(min.node.size))) +
     geom_quasirandom() +
-    facet_wrap(~ num.trees_nice, ncol = 4) +
+    facet_grid(feature_prop_nice ~ num.trees_nice) +
     theme_bw() +
     scale_y_continuous("Mean error") +
     scale_x_discrete("n-gram length") +
