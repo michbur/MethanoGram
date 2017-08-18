@@ -74,7 +74,7 @@ Aside from the optimum number of variables to possibly split (5), we have also c
 
 Below we present beeswarm plots for all parameters tuned for MethanoGram.
 
-```{r,message=FALSE,fig.height=9.5,fig.width=7,results='asis',warning=FALSE}
+```{r,message=FALSE,fig.height=9.8,fig.width=7,results='asis',warning=FALSE}
 res <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
   mutate(mean_error = sqrt(mean_error),
          sd_error = sqrt(sd_error)) %>% 
@@ -103,7 +103,8 @@ part_plots <- lapply(levels(res[["nice"]]), function(ith_condition) {
     scale_alpha_discrete("mtry") +
     ggtitle(ith_condition) +
     theme(legend.position = "bottom",
-          legend.box = "vertical")
+          legend.box = "vertical",
+          legend.spacing = unit(-7, "points"))
 })
 
 for(i in part_plots) {
