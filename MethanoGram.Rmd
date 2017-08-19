@@ -1,6 +1,8 @@
 ---
 title: "MethanoGram"
 author: "Michał Burdukiewicz, Przemysław Gagat, Michał Gaworski, Sławomir Jabłoński, Paweł Mackiewicz, Marcin Łukaszewicz"
+header-includes:
+- \usepackage{rotating}
 output: 
   pdf_document: 
     toc: yes
@@ -11,6 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library(ggplot2)
 library(ggbeeswarm)
 library(latex2exp)
+library(xtable)
 ```
 
 # Introduction
@@ -41,9 +44,13 @@ grid.draw(venn_plots[[4]])
 grid.newpage()
 ```
 
-## Tuned parameters
+\pagebreak
 
-We chose the random forests implementated in the **ranger** R package for estimation of culture conditions, because of its speed and high accuracy. We have optimized three parameters: a number of variables to possibly split at in each node, a number of trees in the forest and a minimal node size. In the tuning procedure we also incorporated different levels of feature selection and n-gram lenghts.
+## Tuning procedure
+
+We chose the random forests implementated in the **ranger** R package for estimation of culture conditions, because of its speed and high accuracy. To find optimal values of hyperparameters, we performed a nested cross-validation of random forest classifiers. The inner loop was a 5-fold cross-validation and the outer loop was more demanding 3-fold cross-validation. 
+
+We have optimized three hyperparameters related to the random forest algorithm: a number of variables to possibly split at in each node, a number of trees in the forest and a minimal node size. In the tuning procedure we also incorporated different data sources, levels of feature selection and n-gram lenghts.
 
 ### n-gram length
 
@@ -71,11 +78,13 @@ In addition to the standard number of variables to possibly split at in each nod
 
 ### Minimal node size
 
-Aside from the optimum number of variables to possibly split (5), we have also considered 3 and 7 variables. There were no visible patterns in the optimal value of the minimum node size. 
+Aside from the optimal number of variables to possibly split advised by literature (5), we have also considered 3 and 7 variables. There were no visible patterns in the optimal value of the minimum node size, aside from the fact that the value advised by the literature was never producing the best-performing predictors.
 
 ## Results of tuning
 
 Below are included beeswarm plots for all parameters tuned for MethanoGram. The shape of points represents minimal node size and transparency distinguish between different mumber of variables to possibly split at in each node (mtry).
+
+The best combinations of parameters for each condition can be also accessed in the table \ref{tab:res}.
 
 ```{r,message=FALSE,fig.height=9.5,fig.width=7,results='asis',warning=FALSE}
 res <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
@@ -83,7 +92,9 @@ res <- read.csv("./results/ngram_benchmark_multi.csv") %>%
          sd_error = sqrt(sd_error)) %>% 
   left_join(read.csv("./data/full_names.csv")) %>% 
   droplevels() %>% 
-  mutate(mtry_nice = round(mtry/((4^ngram_length)*feature_prop*ifelse(seq_type == "both", 2, 1))*12, 0)/12)
+  mutate(mtry_nice = round(mtry/((4^ngram_length)*feature_prop*ifelse(seq_type == "both", 2, 1))*12, 0)/12,
+         seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA")))
+
 
 #lapply(4^(2L:5), function(n_features) unique(round(c(n_features/4, n_features/3, n_features/2), 0)))
 #lapply((4^(2L:5))*2, function(n_features) unique(round(c(n_features/4, n_features/3, n_features/2), 0)))
@@ -92,8 +103,7 @@ part_plots <- lapply(levels(res[["nice"]]), function(ith_condition) {
          nice == ith_condition) %>% 
     mutate(num.trees_nice = factor(paste0("Number of trees: ", num.trees)),
            num.trees_nice = factor(num.trees_nice, levels = levels(num.trees_nice)[c(2L:4, 1)]),
-           feature_prop_nice = paste0("Fraction of retained features: ", feature_prop),
-           seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA"))) %>% 
+           feature_prop_nice = paste0("Fraction of retained features: ", feature_prop)) %>% 
     ggplot(aes(x = factor(ngram_length), y = mean_error, fill = factor(seq_type), 
                shape = factor(min.node.size), alpha = factor(formatC(mtry_nice, digits = 2)))) +
     geom_quasirandom(color = "black", fill = NA, alpha = 1) +
@@ -121,3 +131,26 @@ for(i in part_plots) {
   cat("\n\n\\pagebreak\n\n")
 }
 ```
+
+
+```{r,message=FALSE,results='asis',warning=FALSE}
+filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>% 
+  group_by(nice) %>% 
+  filter(mean_error == min(mean_error)) %>% 
+  ungroup %>% 
+  slice(c(2, 4, 3, 1, 5)) %>% 
+  select(Condition = nice, 
+         `n-gram length` = ngram_length,
+         Source = seq_type,
+         `Feature selection` = feature_prop,
+         mtry = mtry_nice, 
+         `Number of trees` = num.trees,
+         `Minimal node size` = min.node.size,
+         `Mean error` = mean_error) %>% 
+  xtable(digits = 2, align = "r|c|c|c|c|c|c|c|l|",
+         caption = "Results of nested cross-validation. mtry denotes fraction of variables to possibly split at in each node.",
+         label = "tab:res") %>% 
+  print(include.rownames = FALSE, comment = FALSE, 
+        floating.environment = "sidewaystable")
+```
+

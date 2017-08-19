@@ -1,0 +1,69 @@
+\documentclass{article}
+\usepackage{graphics}
+\usepackage{booktabs}
+\usepackage{colortbl, xcolor}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{url}
+%\usepackage{natbib}
+\usepackage{epstopdf}
+\usepackage[nottoc,numbib]{tocbibind}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+
+\author{Micha\l{} Burdukiewicz, Przemys\l{}aw Gagat, Micha\l{} Gaworski, \\
+S\l{}awomir Jab\l{}o\'nski, Pawe\l{} Mackiewicz, Marcin \L{}ukaszewicz}
+\date{}
+\title{PhyMet$^2$: phylogenetic tree \\
+\large Supplemental materials}
+\renewcommand{\section}[2]{}%
+
+\begin{document}
+
+\maketitle
+    The 16S rRNA sequences of methanogens were extracted from GenBank 
+(\url{https://www.ncbi.nlm.nih.gov/}) and Silva (\url{https://www.arb-silva.de/}) databases. 
+The sequences were aligned in MAFFT using slow and accurate algorithm L-INS-i 
+with 1,000 cycles of iterative refinement. Sites suitable for phylogenetic 
+studies from the alignments were selected in GBlocks . The phylogenetic tree was 
+constructed using MrBayes . We applied the mixed model of nucleotide 
+substitutions to specify appropriate substitution models across the large 
+parameter space . Moreover, we assumed the heterogeneity rate across sites 
+described by the invariant model and the discrete gamma model with five category 
+rates. Two independent runs starting from random trees, each using eight Markov 
+chains, were applied. The trees were sampled every 100 generations for 
+20,000,000 generations. In the final analysis, we selected the last 85,720 trees 
+that reached the stationary phase and convergence (i.e. when the standard 
+deviation of split frequencies stabilized and was lower than the proposed 
+threshold of 0.01).
+
+
+\begin{thebibliography}{9}
+\bibitem{b1} 
+Katoh K, Standley DM:
+\textit{MAFFT multiple sequence alignment software version 7: 
+improvements in performance and usability}. 
+Molecular biology and evolution 2013, 30(4):772-780.
+ 
+\bibitem{b2} 
+Talavera G, Castresana J:
+\textit{Improvement of phylogenies after removing 
+divergent and ambiguously aligned blocks from protein sequence alignments}. 
+Systematic biology 2007, 56(4):564-577.
+
+\bibitem{b3} 
+Ronquist F, Teslenko M, van der Mark P, Ayres DL, Darling A, Hohna S, 
+Larget B, Liu L, Suchard MA, Huelsenbeck JP:
+\textit{MrBayes 3.2: efficient Bayesian 
+phylogenetic inference and model choice across a large model space}. 
+Systematic biology 2012, 61(3):539-542.
+
+\bibitem{b4} 
+Huelsenbeck JP, Larget B, Alfaro ME:
+\textit{Bayesian phylogenetic model 
+selection using reversible jump Markov chain Monte Carlo}. Molecular biology and 
+evolution 2004, 21(6):1123-1133
+
+\end{thebibliography}
+
+
+\end{document}
