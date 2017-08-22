@@ -10,4 +10,5 @@ read.csv("./results/ngram_benchmark_multi.csv") %>%
   filter(rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>% 
   group_by(nice) %>% 
   filter(mean_error == min(mean_error)) %>% 
-  ungroup
+  ungroup %>% 
+  select(-mean_error, -sd_error, -mtry_nice)
