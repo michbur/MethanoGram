@@ -1,6 +1,8 @@
 ---
 title: "MethanoGram"
 author: "Michał Burdukiewicz, Przemysław Gagat, Michał Gaworski, Sławomir Jabłoński, Paweł Mackiewicz, Marcin Łukaszewicz"
+header-includes:
+- \usepackage{rotating}
 output: 
   pdf_document: 
     keep_tex: yes
@@ -12,6 +14,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library(ggplot2)
 library(ggbeeswarm)
 library(latex2exp)
+library(xtable)
 ```
 
 # Introduction
@@ -24,13 +27,13 @@ MethanoGram is a predictor of culture conditions of methanogenes. Using random f
 * optimal growth pH,
 * optimal growth NaCl.
 
-Here we document the process of tuning and evalutation of set of classifiers constituting MethanoGram.
+Here we document the process of tuning and evaluation of set of classifiers constituting MethanoGram.
 
 # Tuning and evaluation of MethanoGram
 
 ## Datasets 
 
-To train MethanoGram we used n-grams (subsequences of length $n$) extrated from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culture conditions described in the database (both optimal and non-optimal). Thus, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culture conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl). 
+To train MethanoGram we used n-grams (subsequences of length $n$) extracted from mcrA and 16 rRNA sequences found in the PhyMet$^2$ database. We chose only sequences for which we were able to identify all culture conditions described in the database (both optimal and non-optimal). Thus, we chose only records that have known 16 rRNA sequence, mcrA sequence and all culture conditions (growth rate, growth doubling time, optimal growth temperature, growth temperature, optimal growth pH, growth pH, optimal growth NaCl, growth NaCl). 
 
 We considered two different sets of 16 rRNA sequences and three different sets of mcrA sequences. We removed all sequences containing atypical or unknown nucleotides (b, d, k, m, n, r, s, v, w, y). After purification steps described above we ended with 60 methanogenes (Fig. \ref{fig:venn}). 
 
@@ -42,13 +45,17 @@ grid.draw(venn_plots[[4]])
 grid.newpage()
 ```
 
-## Random forest tuning 
+\pagebreak
 
-We chose the random forests implementated in the **ranger** R package for estimation of culture conditions, because of its speed and high accuracy. We have optimized three parameters: a number of variables to possibly split at in each node, a number of trees in the forest and a minimal node size. In the tuning procedure we also incorporated different levels of feature selection and n-gram lenghts.
+## Tuning procedure
+
+We chose the random forests implemented in the **ranger** R package for estimation of culture conditions, because of its speed and high accuracy. To find optimal values of hyperparameters, we performed a nested cross-validation of random forest classifiers. The inner loop was a 5-fold cross-validation and the outer loop was more demanding 3-fold cross-validation. 
+
+We have optimized three hyperparameters related to the random forest algorithm: a number of variables to possibly split at in each node, a number of trees in the forest and a minimal node size. In the tuning procedure we also incorporated different data sources, levels of feature selection and n-gram lengths.
 
 ### n-gram length
 
-We considered continous 2-, 3-, 4- and 5-grams. The number of possible n-grams for a nucleotide sequence is equal to $4^n$, so the number of feature ranges between 16 (for 2-grams) to 1024 (for 5-grams). Since further increases in the n-gram size were not providing the algorithm with satisfying descrese in the error, we did not considered longer n-grams. 
+We considered continuous 2-, 3-, 4- and 5-grams. The number of possible n-grams for a nucleotide sequence is equal to $4^n$, so the number of feature ranges between 16 (for 2-grams) to 1024 (for 5-grams). Since further increases in the n-gram size were not providing the algorithm with satisfying decrease in the error, we did not considered longer n-grams. 
 
 ### n-gram source
 
@@ -62,46 +69,65 @@ In the third case, n-grams were annotated by their source. For example, in the c
 
 ### Feature selection
 
-To select the most informative n-grams, we used Pearson's correlation between the feature and the target as implemented in the Rfast package. We retained a fraction of features instead of an absolute number of features to keep the feature selection consistent between datasets with varying number of features. We considered following fractions of features: 0.25, 0.5 and 1 (when we do not select any features). In all cases, the strictest feature selection (0.25) proved to create the most efficient classifiers.
+To select the most informative n-grams, we used Pearson's correlation between the feature and the target as implemented in the Rfast package. We retained a fraction of features instead of an absolute number of features to keep the feature selection consistent between datasets with varying number of features. We considered following fractions of features: 0.25 and 0.5. In all cases, the strictest feature selection (0.25) proved to create the most efficient classifiers.
 
-### Number of variables to possibly split at in each node
+We also considered a predictor without any feature selection, but it consistently had the worst performance (results not shown).
 
-In addition to the standard number of variables to possibly split at in each node for regresion tasks ($\frac{1}{3}$ of all considered features), we have also examined $\frac{1}{2}$ and $\frac{1}{4}$.  
+### Number of variables to possibly split at in each node (mtry)
+
+In addition to the standard number of variables to possibly split at in each node for regression tasks ($\frac{1}{3}$ of all considered features), we have also examined $\frac{1}{2}$ and $\frac{1}{4}$. In most cases, $\frac{1}{4}$ was the most optimal.
 
 ### Minimal node size
 
-Aside from the optimum number of variables to possibly split (5), we have also considered 3 and 7 variables. There were no visible patterns in the optimal value of the minimum node size. 
+Aside from the optimal number of variables to possibly split advised by literature (5), we have also considered 3 and 7 variables. There were no visible patterns in the optimal value of the minimum node size, aside from the fact that the value advised by the literature was never producing the best-performing predictors.
 
-# Tuning performance
+## Results of tuning
 
-Below we present performance plots for all parameters considered during tuning of random forest predictors.
+Below are included bee swarm plots for all parameters tuned for MethanoGram. The shape of points represents minimal node size and transparency distinguish between different number of variables to possibly split at in each node (mtry).
 
-```{r,message=FALSE,fig.height=8,fig.width=6.5,results='asis',warning=FALSE}
+The best combinations of parameters for each condition can be also accessed in the table \ref{tab:res}.
+
+```{r,message=FALSE,fig.height=9.5,fig.width=7,results='asis',warning=FALSE}
 res <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
   mutate(mean_error = sqrt(mean_error),
          sd_error = sqrt(sd_error)) %>% 
   left_join(read.csv("./data/full_names.csv")) %>% 
-  droplevels()
+  droplevels() %>% 
+  mutate(mtry_nice = round(mtry/((4^ngram_length)*feature_prop*ifelse(seq_type == "both", 2, 1))*12, 0)/12,
+         seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA")))
 
 
-part_plots <- lapply(levels(res[["nice_tex"]]), function(ith_condition) {
-  filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25,
-         nice_tex == ith_condition) %>% 
+
+#lapply(4^(2L:5), function(n_features) unique(round(c(n_features/4, n_features/3, n_features/2), 0)))
+#lapply((4^(2L:5))*2, function(n_features) unique(round(c(n_features/4, n_features/3, n_features/2), 0)))
+part_plots <- lapply(levels(res[["nice"]]), function(ith_condition) {
+  filter(res, rna_type == "RNA2", mcra_type == "McrA3",
+         nice == ith_condition) %>% 
     mutate(num.trees_nice = factor(paste0("Number of trees: ", num.trees)),
            num.trees_nice = factor(num.trees_nice, levels = levels(num.trees_nice)[c(2L:4, 1)]),
-           seq_type = factor(seq_type, labels = c("Both", "16S rRNA", "mcrA"))) %>% 
-    ggplot(aes(x = factor(ngram_length), y = mean_error, color = factor(seq_type), 
-               shape = factor(min.node.size))) +
+           feature_prop_nice = paste0("Fraction of retained features: ", feature_prop)) %>% 
+    ggplot(aes(x = factor(ngram_length), y = mean_error, fill = factor(seq_type), 
+               shape = factor(min.node.size), alpha = factor(formatC(mtry_nice, digits = 2)))) +
+    geom_quasirandom(color = "black", fill = NA, alpha = 1) +
     geom_quasirandom() +
-    facet_wrap(~ num.trees_nice, ncol = 4) +
+    facet_grid(feature_prop_nice ~ num.trees_nice) +
     theme_bw() +
     scale_y_continuous("Mean error") +
     scale_x_discrete("n-gram length") +
     scale_color_discrete("Data source") +
     scale_shape_discrete("Minimum node size") +
+    scale_fill_manual("Data source", values = c("#1b9e77", "#d95f02", "#7570b3")) +
+    scale_shape_manual("Minimum node size", values = c(21, 22, 23)) +
+    scale_alpha_discrete("Fraction of of variables to possibly split at in each node",
+                         labels = list(latex2exp("$\\frac{1}{4}$"),
+                                       latex2exp("$\\frac{1}{3}$"),
+                                       latex2exp("$\\frac{1}{2}$"))) +
+    guides(fill = guide_legend(override.aes = list(shape = 21)),
+           alpha = guide_legend(override.aes = list(shape = 21, fill = "black"))) +
     ggtitle(TeX(ith_condition)) +
     theme(legend.position = "bottom",
-          legend.box = "vertical")
+          legend.box = "vertical",
+          legend.spacing = unit(-5, "points"))
 })
 
 for(i in part_plots) {
@@ -109,3 +135,26 @@ for(i in part_plots) {
   cat("\n\n\\pagebreak\n\n")
 }
 ```
+
+
+```{r,message=FALSE,results='asis',warning=FALSE}
+filter(res, rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>% 
+  group_by(nice) %>% 
+  filter(mean_error == min(mean_error)) %>% 
+  ungroup %>% 
+  slice(c(2, 4, 3, 1, 5)) %>% 
+  select(Condition = nice, 
+         `n-gram length` = ngram_length,
+         Source = seq_type,
+         `Feature selection` = feature_prop,
+         mtry = mtry_nice, 
+         `Number of trees` = num.trees,
+         `Minimal node size` = min.node.size,
+         `Mean error` = mean_error) %>% 
+  xtable(digits = 2, align = "r|c|c|c|c|c|c|c|l|",
+         caption = "Results of nested cross-validation. mtry denotes fraction of variables to possibly split at in each node.",
+         label = "tab:res") %>% 
+  print(include.rownames = FALSE, comment = FALSE, 
+        floating.environment = "sidewaystable")
+```
+

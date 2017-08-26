@@ -3,3 +3,9 @@
 .RData
 .Ruserdata
 MethanoGram.Rproj
+sources/sources.aux
+sources/sources.log
+sources/sources.bbl
+sources/sources.blg
+tree/tree.aux
+tree/tree.log
