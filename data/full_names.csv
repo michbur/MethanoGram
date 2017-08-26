@@ -1,9 +1,9 @@
-task.id,nice
-growth_doubl,Growth doubling time [h]
-growth_rate,Growth rate
-mean_gt,Growth temp.
-mean_ogt,Optimal growth temp.
-mean_gn,Growth NaCl
-mean_ogn,Optimal growth NaCl
-mean_gp,Growth pH
-mean_ogp,Optimal growth pH
+task.id,nice,nice_tex
+growth_doubl,Growth doubling time [h],Growth doubling time $[h]$
+growth_rate,Growth rate,Growth rate $\[h^{-1}\]$
+mean_gt,Growth temp.,Growth temp. $\[^{\degree} C \]$
+mean_ogt,Optimal growth temp.,Optimal growth temp. $\[^{\degree} C \]$
+mean_gn,Growth NaCl,Growth NaCl $\[mol/dm$^3\]$
+mean_ogn,Optimal growth NaCl,Optimal growth NaCl $\[mol/dm$^3\]$
+mean_gp,Growth pH,Growth pH
+mean_ogp,Optimal growth pH,Optimal growth pH

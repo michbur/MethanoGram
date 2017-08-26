@@ -119,9 +119,9 @@ venn_plots <- lapply(1L:nrow(venn_dat), function(ith_row_id) {
                    # c(as.character(ith_row[["rna"]]),
                    #   as.character(ith_row[["mcra"]]),
                    #   "Known conditions"),
-                   c("16 rRNA",
+                   c("16S rRNA",
                      "mcrA",
-                     "Known culturing conditions"),
+                     "Known culture conditions"),
                    fill = c("#f1a340", "#998ec3", "#f7f7f7"),
                    ind = FALSE)
 })
