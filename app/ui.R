@@ -2,7 +2,7 @@
   
 library(shiny)
 
-shinyUI(fluidPage(tags$head(includeScript("ga.js")),
+shinyUI(fluidPage(#tags$head(includeScript("ga.js")),
                   #tags$style(includeCSS("./www/report.css")),
                   title = "MethaGramPredictor",
                   
