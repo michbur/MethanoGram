@@ -94,7 +94,7 @@ res <- read.csv("./results/ngram_benchmark_multi.csv") %>%
   left_join(read.csv("./data/full_names.csv")) %>% 
   droplevels() %>% 
   mutate(mtry_nice = round(mtry/((4^ngram_length)*feature_prop*ifelse(seq_type == "both", 2, 1))*12, 0)/12,
-         seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA")))
+         seq_type = factor(seq_type, labels = c("Both", "16S rRNA", "mcrA")))
 
 
 
