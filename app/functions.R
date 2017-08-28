@@ -18,25 +18,11 @@ pred_vals <- function(models, ngrams, seq_names) {
   ) %>% 
     data.frame %>% 
     t %>% 
-    data.frame(Property = cont_feats, .) %>% 
-    inner_join(nice_names) %>% 
-    mutate(Property = nice) %>% 
-    select(-nice)
-  
+    data.frame(Property = cont_feats, .) 
+    
   res <- res[c(1, 2, 6, 3, 14L:13, 8, 5, 12:11, 7, 4, 10L:9), ]
   rownames(res) <- NULL
   colnames(res)[-1] <- seq_names
   
   res
 }
-
-nice_names <- readLines("full_names.txt") %>% 
-  strsplit('<OPTION value=\"', fixed = TRUE) %>% 
-  first %>% 
-  strsplit('\" > ', fixed = TRUE) %>% 
-  unlist %>% 
-  strsplit('\t\t\t\t\t', fixed = TRUE) %>% 
-  unlist %>% 
-  matrix(ncol = 2, byrow = TRUE) %>% 
-  data.frame(row.names = .[, 1]) %>% 
-  rename(Property = X1, nice = X2)
