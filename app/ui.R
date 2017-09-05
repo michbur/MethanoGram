@@ -4,6 +4,10 @@ library(shiny)
 
 shinyUI(fluidPage(#tags$head(includeScript("ga.js")),
                   #tags$style(includeCSS("./www/report.css")),
+                  tags$style(HTML("                  
+                  .shiny-input-container:not(.shiny-input-container-inline) {
+                  width: 100%;
+                  }")),
                   title = "MethaGramPredictor",
                   
                   headerPanel(""),

@@ -18,7 +18,7 @@ my_DT <- function(x)
             filter = "none", rownames = FALSE)
 
 source("functions.R")
-load("pred_list.RData")
+#load("pred_list.RData")
 
 shinyServer(function(input, output) {
   
@@ -69,15 +69,44 @@ shinyServer(function(input, output) {
   
   output$dynamic_tabset <- renderUI({
     if(is.null(prediction())) {
-      
-      tabPanel(title = "Sequence input",
-               tags$textarea(id = "text_area", style = "width:90%",
-                             placeholder="Paste sequences (FASTA format required) here...", rows = 22, cols = 60, ""),
-               p(""),
-               actionButton("use_area", "Submit data from field above"),
-               p(""),
-               fileInput('seq_file', 'Submit .fasta or .txt file:'))
-      
+      tabsetPanel(
+        tabPanel(title = "mcrA and 16S rRNA",
+                 textAreaInput(inputId = "text_area_mcra", 
+                               label = "mcrA sequence",
+                               width = "100%",
+                               rows = 15,
+                               placeholder = "Paste sequences (FASTA format required) here...", 
+                               resize = "horizontal"),
+                 p(""),
+                 textAreaInput(inputId = "text_area_rna", 
+                               label = "16S rRNA sequence",
+                               width = "100%",
+                               rows = 15,
+                               placeholder = "Paste sequences (FASTA format required) here...", 
+                               resize = "horizontal"),
+                 p(""),
+                 actionButton("use_area_both", "Submit data from fields above")),
+        tabPanel(title = "Only 16S rRNA",
+                 textAreaInput(inputId = "text_area_rna_only", 
+                               label = "16S rRNA sequence",
+                               width = "100%",
+                               rows = 15,
+                               placeholder = "Paste sequences (FASTA format required) here...", 
+                               resize = "horizontal"),
+                 p(""),
+                 actionButton("use_area_rna", "Submit data from the field above"),
+                 fileInput('seq_file', 'Submit .fasta or .txt file:')),
+        tabPanel(title = "Only mcrA",
+                 textAreaInput(inputId = "text_area_mcra_only", 
+                               label = "mcrA sequence",
+                               width = "100%",
+                               rows = 15,
+                               placeholder = "Paste sequences (FASTA format required) here...", 
+                               resize = "horizontal"),
+                 p(""),
+                 actionButton("use_area_mcra", "Submit data from the field above"),
+                 fileInput('seq_file', 'Submit .fasta or .txt file:'))
+      )
       
     } else {
       tabPanel(title = "Sequence output",
