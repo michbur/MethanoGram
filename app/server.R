@@ -18,7 +18,7 @@ my_DT <- function(x)
             filter = "none", rownames = FALSE)
 
 source("functions.R")
-#load("pred_list.RData")
+load("pred_list.RData")
 
 shinyServer(function(input, output) {
   
@@ -38,8 +38,8 @@ shinyServer(function(input, output) {
         #dummy error, just to stop further processing
         stop("Too many sequences.")
       } else {
-        pred_vals(pred_list, 
-                  extract_ngrams(input_sequences), 
+        pred_vals(pred_list[[input[["seq_type"]]]], 
+                  input_sequences, 
                   names(input_sequences))
       }
     } else {
@@ -69,45 +69,20 @@ shinyServer(function(input, output) {
   
   output$dynamic_tabset <- renderUI({
     if(is.null(prediction())) {
-      tabsetPanel(
-        tabPanel(title = "mcrA and 16S rRNA",
-                 textAreaInput(inputId = "text_area_mcra", 
-                               label = "mcrA sequence",
-                               width = "100%",
-                               rows = 15,
-                               placeholder = "Paste a single mcrA sequence (FASTA format required) here...", 
-                               resize = "horizontal"),
-                 p(""),
-                 textAreaInput(inputId = "text_area_rna", 
-                               label = "16S rRNA sequence",
-                               width = "100%",
-                               rows = 15,
-                               placeholder = "Paste a single 16S rRNA sequence (FASTA format required) here...", 
-                               resize = "horizontal"),
-                 p(""),
-                 actionButton("use_area_both", "Submit data from fields above")),
-        tabPanel(title = "Only 16S rRNA",
-                 textAreaInput(inputId = "text_area_rna_only", 
-                               label = "16S rRNA sequence",
+        tabPanel(title = "",
+                 checkboxGroupInput(inputId = "seq_type", "Choose sequence type", 
+                                    choices = c(`16S rRNA` = "rna", mcrA = "mcra"),
+                                    selected = "rna"),
+                 textAreaInput(inputId = "text_area", 
+                               label = "",
                                width = "100%",
                                rows = 15,
                                placeholder = "Paste sequences (FASTA format required) here...", 
                                resize = "horizontal"),
                  p(""),
-                 actionButton("use_area_rna", "Submit data from the field above"),
-                 fileInput('seq_file', 'Submit .fasta or .txt file:')),
-        tabPanel(title = "Only mcrA",
-                 textAreaInput(inputId = "text_area_mcra_only", 
-                               label = "mcrA sequence",
-                               width = "100%",
-                               rows = 15,
-                               placeholder = "Paste sequences (FASTA format required) here...", 
-                               resize = "horizontal"),
-                 p(""),
-                 actionButton("use_area_mcra", "Submit data from the field above"),
+                 actionButton("use_area", "Submit data from the field above"),
                  fileInput('seq_file', 'Submit .fasta or .txt file:'))
-      )
-      
+ 
     } else {
       tabPanel(title = "Sequence output",
                DT::dataTableOutput("pred_table"),

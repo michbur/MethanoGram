@@ -38,8 +38,6 @@ conditions_dat <- raw_dat[c("Name",
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
   na.omit
 
-
-
 # training data ------------------------------
 
 mcra_seqs <- list(read.fasta("./raw_data/McrA_1.txt"),
@@ -71,36 +69,73 @@ rna_seqs <- list(read.fasta("./raw_data/RNA_1.txt"),
 names(rna_seqs) <- paste0("RNA", 1L:2)
 
 # tuned classifiers ---------------------------------
-tuned_par <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
+tuned_par_all <- read.csv("./results/ngram_benchmark_multi.csv") %>% 
   mutate(mean_error = sqrt(mean_error),
          sd_error = sqrt(sd_error)) %>% 
   left_join(read.csv("./data/full_names.csv")) %>% 
   droplevels() %>% 
   mutate(mtry_nice = round(mtry/((4^ngram_length)*feature_prop*ifelse(seq_type == "both", 2, 1))*12, 0)/12,
          seq_type = factor(seq_type, labels = c("Both", "16 rRNA", "mcrA"))) %>% 
-  filter(rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) %>% 
+  filter(rna_type == "RNA2", mcra_type == "McrA3", feature_prop == 0.25) 
+
+tuned_par_rna <- filter(tuned_par_all, seq_type == "16 rRNA") %>% 
   group_by(nice) %>% 
   filter(mean_error == min(mean_error)) %>% 
-  ungroup %>% 
-  select(-mean_error, -sd_error, -mtry_nice)
+  ungroup
+
+tuned_par_mcra <- filter(tuned_par_all, seq_type == "mcrA") %>% 
+  group_by(nice) %>% 
+  filter(mean_error == min(mean_error)) %>% 
+  ungroup
 
 
-lapply(1L:nrow(tuned_par), function(ith_row) {
-  tuned_row <- tuned_par[]
-})
-ith_seqs_data <- if(ith_seqs == "rna_seqs") {
-  rna_seq
-} else {
-  mcra_seq
-}
+training_data <- list(rna = list(pars = tuned_par_rna,
+                                 seqs = rna_seqs[[2]]),
+                      mcra = list(pars = tuned_par_rna,
+                                  seqs = mcra_seqs[[3]]))
 
-ith_seqs_data <- ith_seqs_data[rownames(ith_seqs_data) %in% all_three, ]
 
-ngram_matrix <- count_ngrams(ith_seqs_data, ngram_length, u = c("a", "c", "g", "t"), scale = TRUE)
+both_mcra_rna <- intersect(unique(rownames(training_data[["rna"]][["seqs"]])), 
+                           unique(rownames(training_data[["mcra"]][["seqs"]])))
+both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), 
+                                  unique(rownames(training_data[["mcra"]][["seqs"]])))
+both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), 
+                                 unique(rownames(training_data[["rna"]][["seqs"]])))
+all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
-normalized_ngrams <- ngram_matrix %>% 
-  as.matrix %>% 
-  data.frame %>% 
-  mutate(source = rownames(ith_seqs_data)) %>% 
-  group_by(source) %>% 
-  summarise_all(mean) 
+
+pred_list <- lapply(training_data, function(single_data) 
+  lapply(single_data[["pars"]][["task.id"]], function(ith_condition) {
+    
+    opt_pars <- filter(single_data[["pars"]], task.id == ith_condition)
+    ith_seqs_data <- single_data[["seqs"]][rownames(single_data[["seqs"]]) %in% all_three, ]
+    ngram_matrix <- count_ngrams(ith_seqs_data, opt_pars[["ngram_length"]], 
+                                 u = c("a", "c", "g", "t"), scale = TRUE)
+    
+    normalized_ngrams <- ngram_matrix %>% 
+      as.matrix %>% 
+      data.frame %>% 
+      mutate(source = rownames(ith_seqs_data)) %>% 
+      group_by(source) %>% 
+      summarise_all(mean) 
+    
+    dat <- conditions_dat[, c("Name", ith_condition)] %>% 
+      inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
+      select(-Name)
+
+    predict_ngrams <- makeRegrTask(id = ith_condition, 
+                                   data = dat, 
+                                   target = ith_condition)
+    
+    filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", 
+                                      perc = opt_pars[["feature_prop"]])
+    
+    filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", 
+                                      perc = 1)
+    
+    learnerRF <- makeLearner("regr.ranger", par.vals = as.list(opt_pars[c("mtry", "num.trees", "min.node.size")]))
+    train(learnerRF, filtered_ngrams)
+  })
+)
+
+save(pred_list, file = "./app/pred_list.RData")
