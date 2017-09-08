@@ -130,8 +130,8 @@ pred_list <- lapply(training_data, function(single_data)
     filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", 
                                       perc = opt_pars[["feature_prop"]])
     
-    filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", 
-                                      perc = 1)
+    # filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", 
+    #                                   perc = 1)
     
     learnerRF <- makeLearner("regr.ranger", par.vals = as.list(opt_pars[c("mtry", "num.trees", "min.node.size")]))
     train(learnerRF, filtered_ngrams)
@@ -139,3 +139,11 @@ pred_list <- lapply(training_data, function(single_data)
 )
 
 save(pred_list, file = "./app/pred_list.RData")
+
+
+error_df <- rbind(select(tuned_par_rna, Property = task.id, Input.seq = seq_type, Mean.err = mean_error, Sd.err = sd_error),
+      select(tuned_par_mcra, Property = task.id, Input.seq = seq_type, Mean.err = mean_error, Sd.err = sd_error)) %>% 
+  droplevels %>% 
+  mutate(Input.seq = )
+  
+error_df[["Input.seq"]]
