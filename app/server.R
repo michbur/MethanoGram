@@ -15,7 +15,7 @@ options(DT.options = list(dom = "Brtip",
 
 my_DT <- function(x)
   datatable(x, escape = FALSE, extensions = 'Buttons',
-            filter = "none", rownames = FALSE)
+            filter = "top", rownames = FALSE)
 
 source("functions.R")
 load("pred_list.RData")
@@ -57,9 +57,14 @@ shinyServer(function(input, output) {
   })
   
   output$benchmark_table <- DT::renderDataTable({
-    read.csv("benchmark_res.csv")
-    
-    formatRound(my_DT(pred_df), 3L:ncol(pred_df), 2)
+    formatRound(my_DT(read.csv("benchmark_res.csv")), 3L:4, 2)
+  })
+  
+  output$benchmark_table_part <- DT::renderDataTable({
+    dat <- filter(read.csv("benchmark_res.csv"), 
+                  Input.seq == ifelse(seq_type == "rna", "16S rRNA", "mcrA"))
+  
+    formatRound(my_DT(dat), 3L:4, 2)
   })
   
   output$dynamic_tabset <- renderUI({
@@ -79,8 +84,8 @@ shinyServer(function(input, output) {
                  actionButton("use_area", "Submit data from the field above"),
                  fileInput('seq_file', 'Submit .fasta or .txt file:')
         ),
-        tabPanel(title = "Benchmark"
-                 renderTable()
+        tabPanel(title = "Average error",
+                 DT::dataTableOutput("benchmark_table")
                  )
       )
     } else {
@@ -88,6 +93,9 @@ shinyServer(function(input, output) {
         tabPanel(title = "Results",
                  DT::dataTableOutput("pred_table"),
                  tags$p(HTML("<h3><A HREF=\"javascript:history.go(0)\">Start a new query</A></h3>"))
+        ),
+        tabPanel(title = "Average error",
+                 DT::dataTableOutput("benchmark_table")
         )
       )
     }
