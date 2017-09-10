@@ -1,9 +1,3 @@
-cont_feats <- c("GrowthDoublingTime", "GrowthRate", "maximalGrowthTemperature", 
-                "maximumGrowthNACL", "maximumGrowthPH", "minimalGrowthTemperature", "minimumGrowthNACL", 
-                "minimumGrowthPH", "optimalGrowthNACLMaximal", "optimalGrowthNACLMinimal", 
-                "optimalGrowthPHMaximal", "optimalGrowthPHMinimal", "optimalGrowthTemperatureMaximal", 
-                "optimalGrowthTemperatureMinimal")
-
 extract_ngrams <- function(x, len = 4) {
   lapply(x, tolower) %>% 
     list2matrix %>%

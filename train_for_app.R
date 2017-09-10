@@ -104,6 +104,8 @@ both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]),
 all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 
+# train with known random seed to make random forests reproducible -------------------
+sed.seed(15390)
 pred_list <- lapply(training_data, function(single_data) 
   lapply(single_data[["pars"]][["task.id"]], function(ith_condition) {
     
@@ -122,7 +124,7 @@ pred_list <- lapply(training_data, function(single_data)
     dat <- conditions_dat[, c("Name", ith_condition)] %>% 
       inner_join(normalized_ngrams, by = c("Name" = "source")) %>% 
       select(-Name)
-
+    
     predict_ngrams <- makeRegrTask(id = ith_condition, 
                                    data = dat, 
                                    target = ith_condition)
@@ -140,10 +142,25 @@ pred_list <- lapply(training_data, function(single_data)
 
 save(pred_list, file = "./app/pred_list.RData")
 
+nice_names_df <- data.frame(Property = c("growth_rate", "mean_ogp", 
+                                         "growth_doubl", "mean_ogt", "mean_ogn"),
+                            nice_name = c("Growth rate", "Optimal pH", 
+                                          "Growth doubling time", 
+                                          "Optimal temperature",
+                                          "Optimal NaCl"))
 
-error_df <- rbind(select(tuned_par_rna, Property = task.id, Input.seq = seq_type, Mean.err = mean_error, Sd.err = sd_error),
-      select(tuned_par_mcra, Property = task.id, Input.seq = seq_type, Mean.err = mean_error, Sd.err = sd_error)) %>% 
+error_df <- rbind(select(tuned_par_rna, 
+                         Property = task.id, Input.seq = seq_type, 
+                         Mean.err = mean_error, Sd.err = sd_error),
+                  select(tuned_par_mcra, 
+                         Property = task.id, Input.seq = seq_type, 
+                         Mean.err = mean_error, Sd.err = sd_error)) %>% 
   droplevels %>% 
-  mutate(Input.seq = )
-  
-error_df[["Input.seq"]]
+  mutate(Input.seq = factor(Input.seq, labels = c("16S rRNA", "mcrA"))) %>% 
+  inner_join(nice_names_df) %>% 
+  select(-Property) %>% 
+  select(Property = nice_name, Input.seq, Mean.err, Sd.err) %>% 
+  mutate(Property = factor(Property, levels = levels(Property)[c(2, 1, 5L:3)])) %>% 
+  arrange(Input.seq, Property)
+
+write.csv(error_df, "./app/benchmark_res.csv", row.names = FALSE)
