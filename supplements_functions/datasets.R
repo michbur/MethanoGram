@@ -126,6 +126,8 @@ venn_plots <- lapply(1L:nrow(venn_dat), function(ith_row_id) {
                    ind = FALSE)
 })
 
+save(venn_plots, file = "venn_plots.RData")
+
 # for(i in 1L:length(venn_plots)) {
 #   cat("\n\n##", i, "\n\n", sep = " ")
 #   grid.draw(venn_plots[[i]])
