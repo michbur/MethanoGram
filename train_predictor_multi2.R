@@ -66,13 +66,13 @@ conditions_dat <- raw_dat[c("Name",
          mean_ogn = (min_ogn + max_ogn)/2,
          mean_gp = (min_gp + max_gp)/2,
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
+  select(Name, growth_doubl, growth_rate, mean_ogt, mean_ogn, mean_ogp) %>% 
   na.omit
 
-
-both_mcra_rna <- intersect(unique(rownames(rna_seqs)), unique(rownames(mcra_seqs)))
-both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(mcra_seqs)))
-both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(rna_seqs)))
-all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
+# both_mcra_rna <- intersect(unique(rownames(rna_seqs)), unique(rownames(mcra_seqs)))
+# both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(mcra_seqs)))
+# both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(rna_seqs)))
+# all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 
 # library(VennDiagram)
@@ -94,7 +94,7 @@ configureMlr(show.info = FALSE)
 benchmark_ngram_length <- pblapply(2L:5, function(ngram_length) 
   lapply(c(0.25, 0.5), function(feature_prop) 
     lapply(names(rna_seqs), function(rna_seq_name)
-      lapply(names(mcra_seqs), function(mcra_seq_name)
+      lapply(names(mcra_seqs)[1], function(mcra_seq_name)
         lapply(c("both", "mcra_seqs", "rna_seqs"), function(ith_seqs) {
           rna_seq <- rna_seqs[[rna_seq_name]]
           mcra_seq <- mcra_seqs[[mcra_seq_name]]
