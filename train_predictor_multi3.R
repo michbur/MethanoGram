@@ -4,6 +4,8 @@ library(seqinr)
 library(pbapply)
 library(mlr)
 
+configureMlr(show.info = FALSE)
+
 source("./functions/validate_seqs.R")
 
 raw_dat <- read.csv("./data/dump_17-07-23.csv") 
@@ -122,7 +124,7 @@ ngram_dat_list <- lapply(training_data, function(i) {
   }
 })
 
-benchmark_res <- lapply(c("growth_doubl", "growth_rate", "mean_ogt", 
+benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt", 
                           "mean_ogn", "mean_ogp"), function(ith_condition)
                             lapply(c(0.1, 0.25, 0.5), function(feature_frac)
                               lapply(1L:length(ngram_dat_list), function(ith_ngram_dat_list) {
@@ -165,11 +167,12 @@ benchmark_res <- lapply(c("growth_doubl", "growth_rate", "mean_ogt",
                                   nested_res <- getNestedTuneResultsOptPathDf(nested_cv) 
                                   
                                   group_by(nested_res, mtry, num.trees, min.node.size) %>% 
-                                    summarise(mean_error = sqrt(mean(mse.test.mean)),
-                                              sd_error = sqrt(sd(mse.test.mean))) %>% 
+                                    summarise(mean_error = mean(mse.test.mean),
+                                              sd_error = sd(mse.test.mean)) %>% 
                                     mutate(task.id = ith_condition) %>% 
                                     arrange(mean_error) %>% 
-                                    mutate(dat_list = ith_ngram_dat_list)
+                                    mutate(dat_list = ith_ngram_dat_list,
+                                           perc = feature_frac)
                                 }, silent = TRUE)
                               })
                             )
