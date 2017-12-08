@@ -65,6 +65,15 @@ both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(
 all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
 
 
+library(ggplot2)
+filter(conditions_dat, Name %in% all_three) %>% 
+  (reshape2::melt) %>% 
+  ggplot(aes(x= value)) +
+  geom_point() +
+  facet_wrap(~ variable, scale = "free_y")
+  
+
+
 chosen_mcra_seqs <- mcra_seqs[rownames(mcra_seqs) %in% all_three, ]
 chosen_rna_seqs <- rna_seqs[rownames(rna_seqs) %in% all_three, ]
 
@@ -113,8 +122,9 @@ ngram_dat_list <- lapply(training_data, function(i) {
   }
 })
 
-benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt", 
+benchmark_res <- lapply(c("growth_doubl", "growth_rate", "mean_ogt", 
                           "mean_ogn", "mean_ogp"), function(ith_condition)
+                            lapply(c(0.1, 0.25, 0.5), function(feature_frac)
                               lapply(1L:length(ngram_dat_list), function(ith_ngram_dat_list) {
                                 try({
                                   ngram_dat <- ngram_dat_list[[ith_ngram_dat_list]]
@@ -127,7 +137,7 @@ benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt",
                                                                  data = dat, 
                                                                  target = ith_condition)
                                   
-                                  filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", perc = 0.25)
+                                  filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", perc = feature_frac)
                                   n_features <- filtered_ngrams[["task.desc"]][["n.feat"]][["numerics"]]
                                   mtry_possibilities <- round(c(n_features/4, n_features/3, n_features/2), 0)
                                   mtry_possibilities[mtry_possibilities == 0] <- 1
@@ -153,14 +163,16 @@ benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt",
                                   nested_cv <- resample(learnerRF_tuned, filtered_ngrams, outer, extract = getTuneResult)
                                   
                                   nested_res <- getNestedTuneResultsOptPathDf(nested_cv) 
+                                  
                                   group_by(nested_res, mtry, num.trees, min.node.size) %>% 
-                                    summarise(mean_error = mean(mse.test.mean),
-                                              sd_error = sd(mse.test.mean)) %>% 
+                                    summarise(mean_error = sqrt(mean(mse.test.mean)),
+                                              sd_error = sqrt(sd(mse.test.mean))) %>% 
                                     mutate(task.id = ith_condition) %>% 
                                     arrange(mean_error) %>% 
                                     mutate(dat_list = ith_ngram_dat_list)
                                 }, silent = TRUE)
                               })
+                            )
 )
 
-save(benchmark_res, "./results/ngram_benchmark_full.RData")
+save(benchmark_res, file = "./results/ngram_benchmark_full.RData")
