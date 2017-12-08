@@ -124,6 +124,9 @@ ngram_dat_list <- lapply(training_data, function(i) {
   }
 })
 
+library("parallelMap")
+parallelStartSocket(4)
+
 benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt", 
                           "mean_ogn", "mean_ogp"), function(ith_condition)
                             lapply(c(0.1, 0.25, 0.5), function(feature_frac)
@@ -177,5 +180,7 @@ benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt",
                               })
                             )
 )
+
+parallelStop()
 
 save(benchmark_res, file = "./results/ngram_benchmark_full.RData")
