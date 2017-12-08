@@ -59,22 +59,13 @@ conditions_dat <- raw_dat[c("Name",
          mean_gp = (min_gp + max_gp)/2,
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
   select(Name, growth_doubl, growth_rate, mean_ogt, mean_ogn, mean_ogp) %>% 
-  na.omit
+  na.omit %>% 
+  filter(Name != "Methanoculleus sediminis")
 
 both_mcra_rna <- intersect(unique(rownames(rna_seqs)), unique(rownames(mcra_seqs)))
 both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(mcra_seqs)))
 both_rna_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(rna_seqs)))
 all_three <- intersect(as.character(conditions_dat[["Name"]]), both_mcra_rna)
-
-
-library(ggplot2)
-filter(conditions_dat, Name %in% all_three) %>% 
-  (reshape2::melt) %>% 
-  ggplot(aes(x= value)) +
-  geom_point() +
-  facet_wrap(~ variable, scale = "free_y")
-  
-
 
 chosen_mcra_seqs <- mcra_seqs[rownames(mcra_seqs) %in% all_three, ]
 chosen_rna_seqs <- rna_seqs[rownames(rna_seqs) %in% all_three, ]
