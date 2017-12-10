@@ -60,7 +60,9 @@ conditions_dat <- raw_dat[c("Name",
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
   select(Name, growth_doubl, growth_rate, mean_ogt, mean_ogn, mean_ogp) %>% 
   na.omit %>% 
-  filter(Name != "Methanoculleus sediminis")
+  filter(Name != "Methanoculleus sediminis") %>% 
+  mutate_if(is.numeric, log) %>% 
+  mutate(mean_ogn = ifelse(mean_ogn == -Inf, -10, mean_ogn))
 
 both_mcra_rna <- intersect(unique(rownames(rna_seqs)), unique(rownames(mcra_seqs)))
 both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(mcra_seqs)))
@@ -116,11 +118,17 @@ ngram_dat_list <- lapply(training_data, function(i) {
 })
 
 library("parallelMap")
+
+options(
+  parallelMap.default.mode        = "multicore",
+  parallelMap.default.cpus        = 4,
+  parallelMap.default.show.info   = FALSE
+)
+
 parallelStartSocket(4)
 
 benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt", 
-                          "mean_ogn", "mean_ogp"), function(ith_condition)
-                            lapply(c(0.1, 0.25, 0.5), function(feature_frac)
+                            "mean_ogn", "mean_ogp"), function(ith_condition)
                               lapply(1L:length(ngram_dat_list), function(ith_ngram_dat_list) {
                                 try({
                                   ngram_dat <- ngram_dat_list[[ith_ngram_dat_list]]
@@ -133,17 +141,13 @@ benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt",
                                                                  data = dat, 
                                                                  target = ith_condition)
                                   
-                                  filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", perc = feature_frac)
-                                  n_features <- filtered_ngrams[["task.desc"]][["n.feat"]][["numerics"]]
-                                  mtry_possibilities <- round(c(n_features/4, n_features/3, n_features/2), 0)
-                                  mtry_possibilities[mtry_possibilities == 0] <- 1
-                                  mtry_possibilities <- unique(mtry_possibilities)
+                                  learnerRF <- makeFilterWrapper(learner = makeLearner("regr.ranger"), 
+                                                                 fw.method = "linear.correlation")
                                   
-                                  learnerRF <- makeLearner("regr.ranger")
                                   learner_pars <- makeParamSet(
                                     makeDiscreteParam("num.trees", values = c(250, 500, 750, 1000)),
                                     makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
-                                    makeDiscreteParam("mtry", values = mtry_possibilities)
+                                    makeDiscreteParam("fw.perc", values = c(0.1, 0.25, 0.5))
                                   )
                                   
                                   set.seed(1410)
@@ -155,21 +159,17 @@ benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt",
                                                                      par.set = learner_pars, 
                                                                      control = makeTuneControlGrid())
                                   
-                                  trainedRF <- train(learnerRF_tuned, filtered_ngrams)
-                                  nested_cv <- resample(learnerRF_tuned, filtered_ngrams, outer, extract = getTuneResult)
+                                  nested_cv <- resample(learnerRF_tuned, predict_ngrams, outer, extract = getTuneResult)
                                   
                                   nested_res <- getNestedTuneResultsOptPathDf(nested_cv) 
                                   
-                                  group_by(nested_res, mtry, num.trees, min.node.size) %>% 
+                                  group_by(nested_res, num.trees, min.node.size, fw.perc) %>% 
                                     summarise(mean_error = mean(mse.test.mean),
                                               sd_error = sd(mse.test.mean)) %>% 
                                     mutate(task.id = ith_condition) %>% 
-                                    arrange(mean_error) %>% 
-                                    mutate(dat_list = ith_ngram_dat_list,
-                                           perc = feature_frac)
+                                    mutate(dat_list = ith_ngram_dat_list)
                                 }, silent = TRUE)
                               })
-                            )
 )
 
 parallelStop()
