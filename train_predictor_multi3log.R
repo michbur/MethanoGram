@@ -118,60 +118,56 @@ ngram_dat_list <- lapply(training_data, function(i) {
 })
 
 library("parallelMap")
+
+options(parallelMap.default.mode = "multicore",
+        parallelMap.default.cpus = 4,
+        parallelMap.default.show.info = FALSE)
+
 parallelStartSocket(4)
 
 benchmark_res <- pblapply(c("growth_doubl", "growth_rate", "mean_ogt", 
                             "mean_ogn", "mean_ogp"), function(ith_condition)
-                              lapply(c(0.1, 0.25, 0.5), function(feature_frac)
-                                lapply(1L:length(ngram_dat_list), function(ith_ngram_dat_list) {
-                                  try({
-                                    ngram_dat <- ngram_dat_list[[ith_ngram_dat_list]]
-                                    
-                                    dat <- conditions_dat[, c("Name", ith_condition)] %>% 
-                                      inner_join(ngram_dat, by = c("Name" = "species")) %>% 
-                                      select(-Name)
-                                    
-                                    predict_ngrams <- makeRegrTask(id = ith_condition, 
-                                                                   data = dat, 
-                                                                   target = ith_condition)
-                                    
-                                    filtered_ngrams <- filterFeatures(predict_ngrams, method = "linear.correlation", perc = feature_frac)
-                                    n_features <- filtered_ngrams[["task.desc"]][["n.feat"]][["numerics"]]
-                                    mtry_possibilities <- round(c(n_features/4, n_features/3, n_features/2), 0)
-                                    mtry_possibilities[mtry_possibilities == 0] <- 1
-                                    mtry_possibilities <- unique(mtry_possibilities)
-                                    
-                                    learnerRF <- makeLearner("regr.ranger")
-                                    learner_pars <- makeParamSet(
-                                      makeDiscreteParam("num.trees", values = c(250, 500, 750, 1000)),
-                                      makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
-                                      makeDiscreteParam("mtry", values = mtry_possibilities)
-                                    )
-                                    
-                                    set.seed(1410)
-                                    
-                                    inner <- makeResampleDesc("CV", iters = 5)
-                                    outer <- makeResampleDesc("CV", iters = 3)
-                                    learnerRF_tuned <- makeTuneWrapper(learnerRF, 
-                                                                       resampling = inner, 
-                                                                       par.set = learner_pars, 
-                                                                       control = makeTuneControlGrid())
-                                    
-                                    trainedRF <- train(learnerRF_tuned, filtered_ngrams)
-                                    nested_cv <- resample(learnerRF_tuned, filtered_ngrams, outer, extract = getTuneResult)
-                                    
-                                    nested_res <- getNestedTuneResultsOptPathDf(nested_cv) 
-                                    
-                                    group_by(nested_res, mtry, num.trees, min.node.size) %>% 
-                                      summarise(mean_error = mean(mse.test.mean),
-                                                sd_error = sd(mse.test.mean)) %>% 
-                                      mutate(task.id = ith_condition) %>% 
-                                      arrange(mean_error) %>% 
-                                      mutate(dat_list = ith_ngram_dat_list,
-                                             perc = feature_frac)
-                                  }, silent = TRUE)
-                                })
-                              )
+                              lapply(1L:length(ngram_dat_list), function(ith_ngram_dat_list) {
+                                try({
+                                  ngram_dat <- ngram_dat_list[[ith_ngram_dat_list]]
+                                  
+                                  dat <- conditions_dat[, c("Name", ith_condition)] %>% 
+                                    inner_join(ngram_dat, by = c("Name" = "species")) %>% 
+                                    select(-Name)
+                                  
+                                  predict_ngrams <- makeRegrTask(id = ith_condition, 
+                                                                 data = dat, 
+                                                                 target = ith_condition)
+                                  
+                                  learnerRF <- makeFilterWrapper(learner = makeLearner("regr.ranger"), 
+                                                                 fw.method = "linear.correlation")
+                                  
+                                  learner_pars <- makeParamSet(
+                                    makeDiscreteParam("num.trees", values = c(250, 500, 750, 1000)),
+                                    makeDiscreteParam("min.node.size", values = c(3, 5, 7)),
+                                    makeDiscreteParam("fw.perc", values = c(0.1, 0.25, 0.5))
+                                  )
+                                  
+                                  set.seed(1410)
+                                  
+                                  inner <- makeResampleDesc("CV", iters = 5)
+                                  outer <- makeResampleDesc("CV", iters = 3)
+                                  learnerRF_tuned <- makeTuneWrapper(learnerRF, 
+                                                                     resampling = inner, 
+                                                                     par.set = learner_pars, 
+                                                                     control = makeTuneControlGrid())
+                                  
+                                  nested_cv <- resample(learnerRF_tuned, predict_ngrams, outer, extract = getTuneResult)
+                                  
+                                  nested_res <- getNestedTuneResultsOptPathDf(nested_cv) 
+                                  
+                                  group_by(nested_res, num.trees, min.node.size, fw.perc) %>% 
+                                    summarise(mean_error = mean(mse.test.mean),
+                                              sd_error = sd(mse.test.mean)) %>% 
+                                    mutate(task.id = ith_condition) %>% 
+                                    mutate(dat_list = ith_ngram_dat_list)
+                                }, silent = TRUE)
+                              })
 )
 
 parallelStop()

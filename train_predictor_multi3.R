@@ -60,9 +60,7 @@ conditions_dat <- raw_dat[c("Name",
          mean_ogp = (min_ogp + max_ogp)/2) %>% 
   select(Name, growth_doubl, growth_rate, mean_ogt, mean_ogn, mean_ogp) %>% 
   na.omit %>% 
-  filter(Name != "Methanoculleus sediminis") %>% 
-  mutate_if(is.numeric, log) %>% 
-  mutate(mean_ogn = ifelse(mean_ogn == -Inf, -10, mean_ogn))
+  filter(Name != "Methanoculleus sediminis") 
 
 both_mcra_rna <- intersect(unique(rownames(rna_seqs)), unique(rownames(mcra_seqs)))
 both_mcra_conditions <- intersect(as.character(conditions_dat[["Name"]]), unique(rownames(mcra_seqs)))
@@ -119,11 +117,9 @@ ngram_dat_list <- lapply(training_data, function(i) {
 
 library("parallelMap")
 
-options(
-  parallelMap.default.mode        = "multicore",
-  parallelMap.default.cpus        = 4,
-  parallelMap.default.show.info   = FALSE
-)
+options(parallelMap.default.mode = "multicore",
+        parallelMap.default.cpus = 4,
+        parallelMap.default.show.info = FALSE)
 
 parallelStartSocket(4)
 
