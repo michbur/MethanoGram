@@ -80,7 +80,7 @@ shinyServer(function(input, output) {
                  actionButton("use_area", "Submit data from the field above"),
                  fileInput('seq_file', 'Submit .fasta or .txt file:')
         ),
-        tabPanel(title = "Average error",
+        tabPanel(title = "Mean error",
                  DT::dataTableOutput("benchmark_table")
                  )
       )
@@ -90,7 +90,7 @@ shinyServer(function(input, output) {
                  DT::dataTableOutput("pred_table"),
                  tags$p(HTML("<h3><A HREF=\"javascript:history.go(0)\">Start a new query</A></h3>"))
         ),
-        tabPanel(title = "Average error",
+        tabPanel(title = "Mean error",
                  DT::dataTableOutput("benchmark_table")
         )
       )
