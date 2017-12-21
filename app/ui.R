@@ -20,9 +20,7 @@ shinyUI(fluidPage(tags$head(includeScript("ga.js")),
   sidebarLayout(
     sidebarPanel(style = "background-color: #e0e0e0;",
                  includeMarkdown("readme.md"),
-                 pre(includeText("rna.txt")),
-                 includeMarkdown("readme2.md"),
-                 pre(includeText("mcra.txt"))
+                 pre(includeText("rna.txt"))
     ),
     
     mainPanel(

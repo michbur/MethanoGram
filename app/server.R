@@ -39,10 +39,10 @@ shinyServer(function(input, output) {
         stop("Too many sequences.")
       } else {
         
-        pred_vals(pred_list[[input[["seq_type"]]]], 
+        pred_vals(pred_list[["rna"]], 
                   input_sequences, 
                   unname(sapply(input_sequences, attr, which = "Annot")),
-                  input[["seq_type"]])
+                  "rna")
       }
     } else {
       NULL
@@ -51,8 +51,7 @@ shinyServer(function(input, output) {
   
   
   output$pred_table <- DT::renderDataTable({
-    pred_df <- prediction()
-    
+    pred_df <- prediction()[, -4]
     formatRound(my_DT(pred_df), 3L:ncol(pred_df), 2)
   })
   
@@ -71,9 +70,6 @@ shinyServer(function(input, output) {
     if(is.null(prediction())) {
       tabsetPanel(
         tabPanel(title = "Sequence input",
-                 selectInput(inputId = "seq_type", "Choose sequence type", 
-                             choices = c(`16S rRNA` = "rna", mcrA = "mcra"),
-                             selected = "rna"),
                  textAreaInput(inputId = "text_area", 
                                label = "",
                                width = "100%",

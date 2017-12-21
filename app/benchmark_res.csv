@@ -1,11 +1,5 @@
-"Property","Input.seq","Mean.err","Sd.err"
-"Growth rate","16S rRNA",0.520252826650461,0.354971982414842
-"Growth doubling time","16S rRNA",27.1916012876405,19.9383135107555
-"Optimal temperature","16S rRNA",15.0064423669514,7.72214020630139
-"Optimal pH","16S rRNA",0.47655724951914,0.334107311840533
-"Optimal NaCl","16S rRNA",0.210382005053945,0.145923596508595
-"Growth rate","mcrA",0.352036744170004,0.23916282629855
-"Growth doubling time","mcrA",28.8888479879684,21.4682476441718
-"Optimal temperature","mcrA",8.89178254650617,3.2947976133334
-"Optimal pH","mcrA",0.471641343301796,0.334416565369797
-"Optimal NaCl","mcrA",0.219407697885877,0.145768075468163
+Property,Mean.err
+Growth doubling time,16.34
+Optimal temperature,0.13
+Optimal pH,0.45
+Optimal NaCl,6.51
