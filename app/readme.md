@@ -1,3 +1,5 @@
+**For the best experience, do not use Internet Explorer/Microsoft Edge browsers.**
+
 ## MethanoGram
 
 Predicts culturing conditions of methanogens using [random forests](https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm) and [n-gram analysis](http://github.com/michbur/biogram). MethanoGram is trained using data from [PhyMet<sup>2</sup>](http://metanogen.biotech.uni.wroc.pl/), a database of the methanogenic bacteria.
