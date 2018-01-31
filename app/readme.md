@@ -1,4 +1,4 @@
-**For the best experience, use Mozilla Firefox or Google Chrome internet browsers.**
+### <span style="color:red">**For the best experience, use Mozilla Firefox or Google Chrome internet browsers.**</spa>
 
 ## MethanoGram
 
