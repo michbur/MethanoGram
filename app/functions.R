@@ -18,10 +18,9 @@ pred_vals <- function(models, ngrams, seq_names, seq_type) {
     
     names(model_ngrams) <- paste0("rna_", names(model_ngrams))
     #model_ngrams <- extract_ngrams(ngrams, nchar(decode_ngrams(sub("rna_", "", raw_names))[1]))
-
-
     
-    predict(single_model, newdata = model_ngrams[, single_model[["features"]]])
+    predict(single_model[["learner.model"]][["next.model"]][["learner.model"]], 
+            model_ngrams[, single_model[["features"]]])[["predictions"]]
   }) %>% 
     data.frame  
 
